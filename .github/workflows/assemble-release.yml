@@ -13,17 +13,21 @@ permissions:
 
 jobs:
   assemble:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     timeout-minutes: 15
     env:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
       RELEASE_TAG: ${{ inputs.tag }}
     steps:
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12.9'
+          architecture: x64
       - name: Join chunks, verify original hashes and upload complete archives
         shell: python
         run: |
-          import hashlib,json,os,re,shutil,subprocess
+          import base64,hashlib,json,os,re,shutil,subprocess,zipfile,zlib
           from pathlib import Path
           tag=os.environ['RELEASE_TAG'];repo=os.environ['GH_REPO']
           assert re.fullmatch(r'v\d+\.\d+\.\d+',tag)
@@ -35,7 +39,7 @@ jobs:
           folder=Path('release-transfer');folder.mkdir()
           gh('release','download',tag,'--repo',repo,'--pattern','release-transfer.json','--dir',str(folder))
           plan=json.loads((folder/'release-transfer.json').read_text())
-          assert plan['tag']==tag and len(plan['files'])==2
+          assert plan['tag']==tag and len(plan['files'])==1
           gh('release','download',tag,'--repo',repo,'--pattern','*.upload-part-*','--dir',str(folder))
           temporary=[]
           for record in plan['files']:
@@ -61,6 +65,36 @@ jobs:
               uploaded=next(a for a in release()['assets'] if a['name']==name)
               assert uploaded['size']==record['bytes'] and uploaded['digest']=='sha256:'+record['sha256']
               print(f'Verified complete archive: {name}',flush=True)
+          # Reproduce the ZIP from the same verified payload and original ZIP
+          # metadata. Both complete archives must match their original hashes.
+          specification=plan['zip_from_7z']
+          assert specification['name']==plan['files'][0]['name'][:-3]+'.zip'
+          assert zlib.ZLIB_RUNTIME_VERSION==specification['zlib_version']
+          unpacked=folder/'unpacked'
+          seven_zip=shutil.which('7z') or r'C:\Program Files\7-Zip\7z.exe'
+          subprocess.run([seven_zip,'x',str(folder/plan['files'][0]['name']),'-o'+str(unpacked),'-y'],check=True)
+          output=folder/specification['name']
+          with zipfile.ZipFile(output,'w',zipfile.ZIP_DEFLATED,compresslevel=9) as archive:
+              for entry in specification['entries']:
+                  path=(unpacked/entry['name']).resolve()
+                  assert path.is_relative_to(unpacked.resolve())
+                  data=path.read_bytes()
+                  assert len(data)==entry['bytes'] and hashlib.sha256(data).hexdigest()==entry['sha256']
+                  info=zipfile.ZipInfo(entry['name'],tuple(entry['date_time']))
+                  for key,value in entry['attributes'].items():setattr(info,key,value)
+                  info.extra=base64.b64decode(entry['extra'])
+                  info.comment=base64.b64decode(entry['comment'])
+                  archive.writestr(info,data,compresslevel=9)
+          assert output.stat().st_size==specification['bytes']
+          assert hashlib.sha256(output.read_bytes()).hexdigest()==specification['sha256']
+          existing=next((a for a in release()['assets'] if a['name']==output.name),None)
+          if existing:
+              assert existing['digest']=='sha256:'+specification['sha256']
+          else:
+              gh('release','upload',tag,str(output),'--repo',repo)
+          uploaded=next(a for a in release()['assets'] if a['name']==output.name)
+          assert uploaded['digest']=='sha256:'+specification['sha256']
+          print(f'Verified original ZIP: {output.name}',flush=True)
           for name in temporary+['release-transfer.json']:
               gh('release','delete-asset',tag,name,'--repo',repo,'--yes')
           print('Complete archives verified; temporary upload chunks removed.',flush=True)
