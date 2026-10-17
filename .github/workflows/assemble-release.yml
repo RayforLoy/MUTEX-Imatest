@@ -18,6 +18,7 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
+      PYTHONUTF8: '1'
       RELEASE_TAG: ${{ inputs.tag }}
     steps:
       - uses: actions/setup-python@v6
