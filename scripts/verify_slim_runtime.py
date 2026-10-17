@@ -69,11 +69,14 @@ def main():
     checks.append({'name':'video-mjpeg','passed':True})
 
     if args.raw_folder:
+        raw_chart=folder/'raw-chart.json'
+        raw_chart.write_text(json.dumps({'id':'raw-codec-test','name':'Native RAW ROI',
+                                         'regions':[{'id':'patch','kind':'flat','box':[.48,.48,.015,.015]}]}),encoding='utf-8')
         for file in sorted(args.raw_folder.iterdir()):
             if file.suffix.lower() not in {'.arw','.nef','.raf','.cr2','.cr3'}:
                 continue
             out = folder/('raw-'+file.stem)
-            invoke('raw-'+file.stem,['analyze',file,'--chart',chart,'--config',config,
+            invoke('raw-'+file.stem,['analyze',file,'--chart',raw_chart,'--config',config,
                                      '--channels','G','--memory-mb','4096','--out',out])
             data = json.loads((out/file.stem/'result.json').read_text(encoding='utf-8'))
             assert data['image']['is_raw'] and data['image']['dtype']=='uint16'

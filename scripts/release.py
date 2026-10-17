@@ -1,5 +1,5 @@
 from pathlib import Path
-import argparse,hashlib,json,shutil,zipfile,xml.etree.ElementTree as ET
+import argparse,hashlib,json,shutil,subprocess,zipfile,xml.etree.ElementTree as ET
 ROOT=Path(__file__).resolve().parents[1]
 import tomllib
 VERSION=tomllib.loads((ROOT/'pyproject.toml').read_text(encoding='utf-8'))['project']['version']
@@ -7,6 +7,7 @@ VERSION=tomllib.loads((ROOT/'pyproject.toml').read_text(encoding='utf-8'))['proj
 def main():
     p=argparse.ArgumentParser();p.add_argument("--zip",action="store_true");p.add_argument('--portable-dir',type=Path)
     p.add_argument('--compresslevel',type=int,choices=range(1,10),default=9)
+    p.add_argument('--seven-zip',type=Path,help='Optional path to 7z/7za/7zr for a smaller portable archive')
     p.add_argument('--require-bundled',action='store_true');ns=p.parse_args()
     target=ns.portable_dir.resolve() if ns.portable_dir else ROOT/"dist"/"MUTEX Imatest"
     if not (target/"MUTEX Imatest.exe").exists():raise ValueError("Build portable app first")
@@ -59,8 +60,14 @@ def main():
         with zipfile.ZipFile(ROOT/"dist"/f"MUTEX-Imatest-{VERSION}-windows-x64.zip","w",zipfile.ZIP_DEFLATED,compresslevel=ns.compresslevel) as z:
             for file in sorted(target.rglob("*")):
                 if file.is_file():z.write(file,Path("MUTEX Imatest")/file.relative_to(target),compress_type=zipfile.ZIP_STORED if file.suffix.lower()=='.zip' else zipfile.ZIP_DEFLATED)
+    if ns.seven_zip:
+        archive=ROOT/'dist'/f'MUTEX-Imatest-{VERSION}-windows-x64.7z'
+        if archive.exists():raise FileExistsError('Move the previous 7z archive aside before packaging again')
+        subprocess.run([str(ns.seven_zip.resolve()),'a','-t7z','-m0=LZMA2','-mx=9','-mmt=2',str(archive),target.name],cwd=target.parent,check=True)
+        subprocess.run([str(ns.seven_zip.resolve()),'t',str(archive)],check=True)
     records={}
-    for file in (ROOT/"dist").glob(f"MUTEX-Imatest-{VERSION}-*.zip"):records[file.name]={"bytes":file.stat().st_size,"sha256":hashlib.sha256(file.read_bytes()).hexdigest()}
+    for file in sorted((ROOT/"dist").glob(f"MUTEX-Imatest-{VERSION}-*")):
+        if file.suffix in {'.zip','.7z'}:records[file.name]={"bytes":file.stat().st_size,"sha256":hashlib.sha256(file.read_bytes()).hexdigest()}
     records["portable"]={"file_count":sum(p.is_file() for p in target.rglob("*")),"bytes":sum(p.stat().st_size for p in target.rglob("*") if p.is_file()),
                          "exe_sha256":hashlib.sha256((target/"MUTEX Imatest.exe").read_bytes()).hexdigest()}
     (ROOT/"dist"/"release-manifest.json").write_text(json.dumps(records,indent=2),encoding="utf-8")
