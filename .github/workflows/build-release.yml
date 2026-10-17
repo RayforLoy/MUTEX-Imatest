@@ -11,6 +11,10 @@ on:
         description: SHA-256 of the complete source ZIP already on the draft
         required: true
         default: 1deb189e0cb4ac3d50c91989342c435fb3ff41979cc9df0f0555c417069f7640
+      release_id:
+        description: Numeric ID of the draft release
+        required: true
+        default: '415926243'
 
 permissions:
   contents: write
@@ -24,6 +28,7 @@ jobs:
       GH_REPO: ${{ github.repository }}
       RELEASE_TAG: ${{ inputs.tag }}
       SOURCE_SHA256: ${{ inputs.source_sha256 }}
+      RELEASE_ID: ${{ inputs.release_id }}
       PYTHONUTF8: '1'
       PYTHONIOENCODING: utf-8
       QT_QPA_PLATFORM: offscreen
@@ -40,11 +45,15 @@ jobs:
           tag=os.environ['RELEASE_TAG'];repo=os.environ['GH_REPO']
           assert re.fullmatch(r'v\d+\.\d+\.\d+',tag)
           assert re.fullmatch(r'[a-f0-9]{64}',os.environ['SOURCE_SHA256'])
-          meta=json.loads(subprocess.check_output(['gh','api',f'repos/{repo}/releases/tags/{tag}'],text=True))
-          assert meta['draft']
+          release_id=os.environ['RELEASE_ID'];assert release_id.isdigit()
+          meta=json.loads(subprocess.check_output(['gh','api',f'repos/{repo}/releases/{release_id}'],text=True))
+          assert meta['draft'] and meta['tag_name']==tag
           name=f'MUTEX-Imatest-{tag[1:]}-source.zip'
-          subprocess.run(['gh','release','download',tag,'--repo',repo,'--pattern',name,'--dir','input'],check=True)
           archive=Path('input')/name
+          archive.parent.mkdir()
+          asset=next(a for a in meta['assets'] if a['name']==name)
+          with archive.open('wb') as stream:
+              subprocess.run(['gh','api','-H','Accept: application/octet-stream',f"repos/{repo}/releases/assets/{asset['id']}"],stdout=stream,check=True)
           assert hashlib.sha256(archive.read_bytes()).hexdigest()==os.environ['SOURCE_SHA256']
           root=Path('source-tree').resolve()
           with zipfile.ZipFile(archive) as z:
@@ -136,16 +145,28 @@ jobs:
         working-directory: source-tree
         shell: python
         run: |
-          import hashlib,json,os,re,subprocess
+          import hashlib,json,os,re,subprocess,urllib.request,urllib.parse
           from pathlib import Path
           tag=os.environ['RELEASE_TAG'];repo=os.environ['GH_REPO']
           gh=lambda *args:subprocess.check_output(['gh',*args],text=True)
-          meta=json.loads(gh('api',f'repos/{repo}/releases/tags/{tag}'));assert meta['draft']
+          release_id=os.environ['RELEASE_ID'];assert release_id.isdigit()
+          endpoint=f'repos/{repo}/releases/{release_id}'
+          meta=json.loads(gh('api',endpoint));assert meta['draft'] and meta['tag_name']==tag
           assets=sorted(Path('dist').glob(f'MUTEX-Imatest-{tag[1:]}-*'))
           assets=[p for p in assets if p.suffix in {'.zip','.7z'}]+[Path('dist/SHA256SUMS.txt'),Path('dist/release-manifest.json')]
           assert len(assets)==6
-          gh('release','upload',tag,*map(str,assets),'--repo',repo,'--clobber')
-          uploaded={a['name']:a for a in json.loads(gh('api',f'repos/{repo}/releases/tags/{tag}'))['assets']}
+          upload_url=meta['upload_url'].split('{')[0]
+          assert urllib.parse.urlparse(upload_url).netloc=='uploads.github.com'
+          for p in assets:
+              existing=next((a for a in meta['assets'] if a['name']==p.name),None)
+              if existing:gh('api','--method','DELETE',f"repos/{repo}/releases/assets/{existing['id']}")
+              request=urllib.request.Request(upload_url+'?name='+urllib.parse.quote(p.name),data=p.read_bytes(),
+                  headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Content-Type':'application/octet-stream'},method='POST')
+              with urllib.request.urlopen(request,timeout=600) as response:
+                  data=json.load(response)
+              assert data['digest']=='sha256:'+hashlib.sha256(p.read_bytes()).hexdigest()
+              print('Uploaded and verified:',p.name,flush=True)
+          uploaded={a['name']:a for a in json.loads(gh('api',endpoint))['assets']}
           for p in assets:
               assert uploaded[p.name]['size']==p.stat().st_size
               assert uploaded[p.name]['digest']=='sha256:'+hashlib.sha256(p.read_bytes()).hexdigest()
