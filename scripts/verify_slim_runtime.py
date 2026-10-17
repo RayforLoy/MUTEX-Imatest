@@ -74,7 +74,7 @@ def main():
                 continue
             out = folder/('raw-'+file.stem)
             invoke('raw-'+file.stem,['analyze',file,'--chart',chart,'--config',config,
-                                     '--channels','G','--out',out])
+                                     '--channels','G','--memory-mb','4096','--out',out])
             data = json.loads((out/file.stem/'result.json').read_text(encoding='utf-8'))
             assert data['image']['is_raw'] and data['image']['dtype']=='uint16'
             checks.append({'name':file.name,'passed':True,'dtype':'uint16','raw':True})
