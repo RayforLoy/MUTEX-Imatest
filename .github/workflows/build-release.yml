@@ -1,0 +1,152 @@
+name: Build Windows release from verified source
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing draft release tag
+        required: true
+        default: v0.7.1
+      source_sha256:
+        description: SHA-256 of the complete source ZIP already on the draft
+        required: true
+        default: 1deb189e0cb4ac3d50c91989342c435fb3ff41979cc9df0f0555c417069f7640
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 35
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      RELEASE_TAG: ${{ inputs.tag }}
+      SOURCE_SHA256: ${{ inputs.source_sha256 }}
+      PYTHONUTF8: '1'
+      PYTHONIOENCODING: utf-8
+      QT_QPA_PLATFORM: offscreen
+    steps:
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12.9'
+          architecture: x64
+      - name: Download and verify the complete source
+        shell: python
+        run: |
+          import hashlib,json,os,re,subprocess,zipfile
+          from pathlib import Path
+          tag=os.environ['RELEASE_TAG'];repo=os.environ['GH_REPO']
+          assert re.fullmatch(r'v\d+\.\d+\.\d+',tag)
+          assert re.fullmatch(r'[a-f0-9]{64}',os.environ['SOURCE_SHA256'])
+          meta=json.loads(subprocess.check_output(['gh','api',f'repos/{repo}/releases/tags/{tag}'],text=True))
+          assert meta['draft']
+          name=f'MUTEX-Imatest-{tag[1:]}-source.zip'
+          subprocess.run(['gh','release','download',tag,'--repo',repo,'--pattern',name,'--dir','input'],check=True)
+          archive=Path('input')/name
+          assert hashlib.sha256(archive.read_bytes()).hexdigest()==os.environ['SOURCE_SHA256']
+          root=Path('source-tree').resolve()
+          with zipfile.ZipFile(archive) as z:
+              assert all((root/n).resolve().is_relative_to(root) for n in z.namelist())
+              z.extractall(root)
+      - name: Keep bundled raster assets separate while testing source
+        shell: pwsh
+        run: |
+          $taskRoot=(Resolve-Path -LiteralPath source-tree).Path
+          $taskSource=(Resolve-Path -LiteralPath source-tree/template/bundled).Path
+          New-Item -ItemType Directory -Path source-tree/private_assets -Force | Out-Null
+          $taskTarget=[IO.Path]::GetFullPath((Join-Path $taskRoot 'private_assets/bundled_templates'))
+          if (-not $taskSource.StartsWith($taskRoot+'\') -or -not $taskTarget.StartsWith($taskRoot+'\')) { throw 'Invalid source tree path' }
+          Move-Item -LiteralPath $taskSource -Destination $taskTarget
+      - name: Install the locked environment and matching LibRaw
+        working-directory: source-tree
+        shell: pwsh
+        run: |
+          python -m venv .venv
+          if ($LASTEXITCODE -ne 0) {exit $LASTEXITCODE}
+          .venv/Scripts/python.exe -m pip install -r requirements-lock.txt
+          if ($LASTEXITCODE -ne 0) {exit $LASTEXITCODE}
+          .venv/Scripts/python.exe scripts/upgrade_libraw.py
+      - name: Run the complete test suite
+        working-directory: source-tree
+        shell: pwsh
+        run: .venv/Scripts/python.exe -c "import cv2,pytest;cv2.setNumThreads(1);raise SystemExit(pytest.main(['-q','--junitxml=validation/pytest.xml']))"
+      - name: Build the portable application
+        working-directory: source-tree
+        shell: pwsh
+        run: .venv/Scripts/python.exe scripts/build_iq_release.py
+      - name: Check the frozen GUI with a blank user profile
+        working-directory: source-tree
+        shell: pwsh
+        run: |
+          $env:WIN_PD_OVERRIDE_LOCAL_APPDATA=Join-Path $env:RUNNER_TEMP 'mutex-clean-local'
+          $env:WIN_PD_OVERRIDE_APPDATA=Join-Path $env:RUNNER_TEMP 'mutex-clean-roaming'
+          & 'dist/MUTEX Imatest/MUTEX-CLI.exe' selftest --out validation/packaged-selftest-final
+      - name: Check TIFF, video and HTML/PDF exports
+        working-directory: source-tree
+        shell: pwsh
+        run: |
+          .venv/Scripts/python.exe scripts/verify_slim_runtime.py
+          if ($LASTEXITCODE -ne 0) {exit $LASTEXITCODE}
+          .venv/Scripts/python.exe scripts/verify_report_exports.py
+      - name: Check pinned official samples and all CLI workflows
+        working-directory: source-tree
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path samples/private/imatest-examples -Force | Out-Null
+          '{"repository":"https://github.com/imatest/examples","commit":"1699bbbc8143e5a3f90260961b2677c9c33f6dd0"}' | Set-Content -LiteralPath samples/private/imatest-examples/revision.json -Encoding utf8NoBOM
+          .venv/Scripts/python.exe scripts/verify_official_samples.py --download
+          if ($LASTEXITCODE -ne 0) {exit $LASTEXITCODE}
+          .venv/Scripts/python.exe scripts/verify_iq_packaged.py
+      - name: Record checks and verify the previously tested LibRaw binary
+        working-directory: source-tree
+        shell: python
+        run: |
+          import hashlib,json,os,xml.etree.ElementTree as ET
+          from pathlib import Path
+          read=lambda p:json.loads(Path(p).read_text(encoding='utf-8'))
+          previous=read('release-checks.json')
+          tests=ET.parse('validation/pytest.xml').getroot().find('testsuite')
+          assert int(tests.get('tests'))==315 and all(int(tests.get(k))==0 for k in ['failures','errors','skipped'])
+          gui=read('validation/packaged-selftest-final/selftest.json')
+          assert gui['passed'] and not gui['errors'] and gui['templates']['total']==9
+          cli=read('validation/iq-packaged/verification.json');assert cli['all_passed']
+          formats=read('validation/slim-runtime/verification.json');assert formats['passed']
+          assert read('validation/report-export/verification.json')['passed']
+          native=hashlib.sha256(Path('dist/MUTEX Imatest/_internal/rawpy/raw_r.dll').read_bytes()).hexdigest()
+          assert native=='6a459c22039abf0eac4d263673337c8ed5f223acbd372fcf77610debf80ac8cd'
+          build=read('validation/iq-build/verification.json');assert build['stable_sources'] and build['returncode']==0
+          result={'version':os.environ['RELEASE_TAG'][1:],'source_commit':previous['source_commit'],
+            'input_source_zip_sha256':os.environ['SOURCE_SHA256'],'github_actions_run':os.environ['GITHUB_RUN_ID'],
+            'pytest':{'passed':315,'failed':0,'skipped':0},'source_stable_during_build':True,
+            'gui_exe_sha256':build['exe_sha256'],'cli_exe_sha256':cli['exe_sha256'],
+            'packaged_gui_selftest':True,'packaged_cli_checks':len(cli['checks']),'codec_checks':formats['checks'],
+            'html_pdf_exports':True,'clean_user_profile_templates':gui['templates'],
+            'raw_compatibility_reference':{'matching_libraw_sha256':native,
+              'local_reference_checks':[c for c in previous['codec_checks'] if c.get('raw')],
+              'scope':'RAW fixtures checked locally with this identical LibRaw binary and unchanged decoder source.'},
+            'private_source_svg_pdf_included':False,'user_photographs_or_reports_included':False}
+          Path('validation/release-checks.json').write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding='utf-8')
+      - name: Package both complete formats with every template
+        working-directory: source-tree
+        shell: pwsh
+        run: .venv/Scripts/python.exe scripts/release.py --zip --require-bundled --seven-zip 'C:/Program Files/7-Zip/7z.exe'
+      - name: Upload verified artifacts to the existing draft
+        working-directory: source-tree
+        shell: python
+        run: |
+          import hashlib,json,os,re,subprocess
+          from pathlib import Path
+          tag=os.environ['RELEASE_TAG'];repo=os.environ['GH_REPO']
+          gh=lambda *args:subprocess.check_output(['gh',*args],text=True)
+          meta=json.loads(gh('api',f'repos/{repo}/releases/tags/{tag}'));assert meta['draft']
+          assets=sorted(Path('dist').glob(f'MUTEX-Imatest-{tag[1:]}-*'))
+          assets=[p for p in assets if p.suffix in {'.zip','.7z'}]+[Path('dist/SHA256SUMS.txt'),Path('dist/release-manifest.json')]
+          assert len(assets)==6
+          gh('release','upload',tag,*map(str,assets),'--repo',repo,'--clobber')
+          uploaded={a['name']:a for a in json.loads(gh('api',f'repos/{repo}/releases/tags/{tag}'))['assets']}
+          for p in assets:
+              assert uploaded[p.name]['size']==p.stat().st_size
+              assert uploaded[p.name]['digest']=='sha256:'+hashlib.sha256(p.read_bytes()).hexdigest()
+          print('All six release assets verified; release remains a draft.',flush=True)
