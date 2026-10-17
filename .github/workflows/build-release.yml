@@ -116,6 +116,8 @@ jobs:
           from pathlib import Path
           read=lambda p:json.loads(Path(p).read_text(encoding='utf-8'))
           previous=read('release-checks.json')
+          raw_reference=previous.get('raw_compatibility_reference',{}).get('local_reference_checks') or [c for c in previous['codec_checks'] if c.get('raw')]
+          assert len(raw_reference)==7
           tests=ET.parse('validation/pytest.xml').getroot().find('testsuite')
           assert int(tests.get('tests'))==315 and all(int(tests.get(k))==0 for k in ['failures','errors','skipped'])
           gui=read('validation/packaged-selftest-final/selftest.json')
@@ -133,7 +135,7 @@ jobs:
             'packaged_gui_selftest':True,'packaged_cli_checks':len(cli['checks']),'codec_checks':formats['checks'],
             'html_pdf_exports':True,'clean_user_profile_templates':gui['templates'],
             'raw_compatibility_reference':{'matching_libraw_sha256':native,
-              'local_reference_checks':[c for c in previous['codec_checks'] if c.get('raw')],
+              'local_reference_checks':raw_reference,
               'scope':'RAW fixtures checked locally with this identical LibRaw binary and unchanged decoder source.'},
             'private_source_svg_pdf_included':False,'user_photographs_or_reports_included':False}
           Path('validation/release-checks.json').write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding='utf-8')
