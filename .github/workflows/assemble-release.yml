@@ -1,0 +1,66 @@
+name: Assemble verified release uploads
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Draft release tag containing release-transfer.json
+        required: true
+        default: v0.7.1
+
+permissions:
+  contents: write
+
+jobs:
+  assemble:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      RELEASE_TAG: ${{ inputs.tag }}
+    steps:
+      - name: Join chunks, verify original hashes and upload complete archives
+        shell: python
+        run: |
+          import hashlib,json,os,re,shutil,subprocess
+          from pathlib import Path
+          tag=os.environ['RELEASE_TAG'];repo=os.environ['GH_REPO']
+          assert re.fullmatch(r'v\d+\.\d+\.\d+',tag)
+          def gh(*args):
+              return subprocess.check_output(['gh',*args],text=True)
+          def release():
+              return json.loads(gh('api',f'repos/{repo}/releases/tags/{tag}'))
+          assert release()['draft'], 'Assembly is restricted to a draft release'
+          folder=Path('release-transfer');folder.mkdir()
+          gh('release','download',tag,'--repo',repo,'--pattern','release-transfer.json','--dir',str(folder))
+          plan=json.loads((folder/'release-transfer.json').read_text())
+          assert plan['tag']==tag and len(plan['files'])==2
+          gh('release','download',tag,'--repo',repo,'--pattern','*.upload-part-*','--dir',str(folder))
+          temporary=[]
+          for record in plan['files']:
+              name=record['name']
+              assert re.fullmatch(r'MUTEX-Imatest-\d+\.\d+\.\d+-windows-x64\.(7z|zip)',name)
+              assert tag[1:] in name and 0<record['bytes']<2*1024**3
+              output=folder/name
+              with output.open('xb') as stream:
+                  for index,part in enumerate(record['parts'],1):
+                      assert part['name']==f'{name}.upload-part-{index:04d}'
+                      path=folder/part['name']
+                      assert path.stat().st_size==part['bytes']
+                      assert hashlib.sha256(path.read_bytes()).hexdigest()==part['sha256']
+                      with path.open('rb') as source:shutil.copyfileobj(source,stream)
+                      temporary.append(part['name'])
+              assert output.stat().st_size==record['bytes']
+              assert hashlib.sha256(output.read_bytes()).hexdigest()==record['sha256']
+              existing=next((a for a in release()['assets'] if a['name']==name),None)
+              if existing:
+                  assert existing['digest']=='sha256:'+record['sha256']
+              else:
+                  gh('release','upload',tag,str(output),'--repo',repo)
+              uploaded=next(a for a in release()['assets'] if a['name']==name)
+              assert uploaded['size']==record['bytes'] and uploaded['digest']=='sha256:'+record['sha256']
+              print(f'Verified complete archive: {name}',flush=True)
+          for name in temporary+['release-transfer.json']:
+              gh('release','delete-asset',tag,name,'--repo',repo,'--yes')
+          print('Complete archives verified; temporary upload chunks removed.',flush=True)
