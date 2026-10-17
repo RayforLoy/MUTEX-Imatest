@@ -1,0 +1,22 @@
+[
+  {
+    "id": "commons-siemens",
+    "path": "upstream/commons-siemens/Siemens_star.svg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/5/50/Siemens_star.svg",
+    "source_page": "https://commons.wikimedia.org/wiki/File:Siemens_star.svg",
+    "author": "Leonhard Wimmer",
+    "file_revision": "2006-09-05",
+    "license": "CC-BY-SA-3.0",
+    "sha256": "361df3e44f6e3d4a6101c17bed9529feb03af8c0f1909cdaaeaa02fd499928a0"
+  },
+  {
+    "id": "commons-usaf",
+    "path": "upstream/commons-usaf/USAF-1951.svg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/f/fe/USAF-1951.svg",
+    "source_page": "https://commons.wikimedia.org/wiki/File:USAF-1951.svg",
+    "author": "Setreset; 2022 typography edit by Mikhail Ryazanov",
+    "file_revision": "2022-07-23",
+    "license": "CC-BY-SA-3.0",
+    "sha256": "b2431af9435025a965a4ca9de68512ffcae4870dd7f7aa202f144d9f5ab72059"
+  }
+]

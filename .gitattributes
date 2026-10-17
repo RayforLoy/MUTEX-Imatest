@@ -1,0 +1,13 @@
+* text=auto eol=lf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.mchart binary
+*.mxtpl binary
+# Template manifests pin exact upstream/artwork bytes, including line endings.
+template/** -text

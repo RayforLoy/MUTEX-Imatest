@@ -1,0 +1,46 @@
+{
+  "id": "public-generic-checkerboard-v1",
+  "name": "通用棋盘格 · 9×7 内角点 · 原创",
+  "regions": [
+    {
+      "id": "GRID-9x7",
+      "kind": "grid",
+      "box": [
+        0.18594766537646545,
+        0.1251003804872173,
+        0.6281046692470691,
+        0.7497992390255654
+      ],
+      "label": "棋盘格 · 9×7 内角点",
+      "params": {
+        "rows": 7,
+        "cols": 9,
+        "square_size_mm": 16.0,
+        "board_square_counts": [
+          10,
+          8
+        ],
+        "board_rotation_deg": 5,
+        "target_family": "checkerboard"
+      },
+      "enabled": true
+    }
+  ],
+  "physical_size_mm": [
+    297.0,
+    210.0
+  ],
+  "reference_size": [
+    2970,
+    2100
+  ],
+  "calibrated": false,
+  "fiducials": [],
+  "preview": "../previews/generic-checkerboard.png",
+  "source_path": "../originals/generic-checkerboard.svg",
+  "source_page": 0,
+  "asset_license": "CC0-1.0; MUTEX Imatest contributors",
+  "schema_version": 1,
+  "notes": "原创 CC0 棋盘格；10×8 方格、9×7 内角点，设计格边长16mm，图案旋转5°。grid ROI含完整棋盘及白边，不含文字/定位辅助标记。默认未校准，需核对打印尺寸。可测63个角点去投影平面后的原生像素残差RMS/最大值和残差曲线；结果同时包含打印/平整度/检测/光学误差，不能当作镜头畸变百分比或相机标定。整卡及包含完整棋盘的局部照片可配准；缺失棋盘角点时拒绝或标记ROI越界，不从部分棋盘补出缺失角点。",
+  "aliases": []
+}

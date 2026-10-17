@@ -1,0 +1,45 @@
+{
+  "id": "public-commons-siemens-v1",
+  "name": "开放图卡 · Siemens star · Wimmer",
+  "regions": [
+    {
+      "id": "S-16",
+      "kind": "star",
+      "box": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "label": "西门子星 · 16 周期",
+      "params": {
+        "auto_detect": true,
+        "target_family": "siemens_star",
+        "cycles": 16,
+        "pattern": "binary",
+        "center": [
+          0.5,
+          0.5
+        ]
+      },
+      "enabled": true
+    }
+  ],
+  "physical_size_mm": [
+    100.0,
+    100.0
+  ],
+  "reference_size": [
+    1000,
+    1000
+  ],
+  "calibrated": false,
+  "fiducials": [],
+  "preview": "../previews/commons-siemens.png",
+  "source_path": "../originals/commons-siemens.svg",
+  "source_page": 0,
+  "asset_license": "CC-BY-SA-3.0; Leonhard Wimmer; MUTEX adaptation",
+  "schema_version": 1,
+  "notes": "来源 Wikimedia Commons，Leonhard Wimmer；采用 CC BY-SA 3.0。修改：移除无作用外部DTD、增加白底及100mm打印尺寸；星图几何未变。完整原文件及来源、许可在template/upstream和ATTRIBUTION.md。16个黑瓣＝16黑白周期。未确认实物尺寸，不输出绝对lp/mm/DPI。",
+  "aliases": []
+}

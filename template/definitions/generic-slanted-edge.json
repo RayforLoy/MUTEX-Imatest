@@ -1,0 +1,311 @@
+{
+  "id": "public-generic-slanted-edge-v1",
+  "name": "通用斜边 · 3×3 双方向 · 原创",
+  "regions": [
+    {
+      "id": "E1-1-H",
+      "kind": "edge",
+      "box": [
+        0.1515398523273228,
+        0.13455752156487533,
+        0.06262626262626263,
+        0.045714285714285714
+      ],
+      "label": "5° 斜边 E1-1 · H",
+      "params": {
+        "auto_detect": true,
+        "target_family": "slanted_edge"
+      },
+      "enabled": true
+    },
+    {
+      "id": "E1-1-V",
+      "kind": "edge",
+      "box": [
+        0.21260242582954944,
+        0.1905111244819756,
+        0.03232323232323232,
+        0.08857142857142858
+      ],
+      "label": "5° 斜边 E1-1 · V",
+      "params": {
+        "auto_detect": true,
+        "target_family": "slanted_edge"
+      },
+      "enabled": true
+    },
+    {
+      "id": "E1-2-H",
+      "kind": "edge",
+      "box": [
+        0.47308867387614434,
+        0.13455752156487533,
+        0.06262626262626263,
+        0.045714285714285714
+      ],
+      "label": "5° 斜边 E1-2 · H",
+      "params": {
+        "auto_detect": true,
+        "target_family": "slanted_edge"
+      },
+      "enabled": true
+    },
+    {
+      "id": "E1-2-V",
+      "kind": "edge",
+      "box": [
+        0.5341512473783709,
+        0.1905111244819756,
+        0.03232323232323232,
+        0.08857142857142858
+      ],
+      "label": "5° 斜边 E1-2 · V",
+      "params": {
+        "auto_detect": true,
+        "target_family": "slanted_edge"
+      },
+      "enabled": true
+    },
+    {
+      "id": "E1-3-H",
+      "kind": "edge",
+      "box": [
+        0.7946374954249659,
+        0.13455752156487533,
+        0.06262626262626263,
+        0.045714285714285714
+      ],
+      "label": "5° 斜边 E1-3 · H",
+      "params": {
+        "auto_detect": true,
+        "target_family": "slanted_edge"
+      },
+      "enabled": true
+    },
+    {
+      "id": "E1-3-V",
+      "kind": "edge",
+      "box": [
+        0.8557000689271924,
+        0.1905111244819756,
+        0.03232323232323232,
+        0.08857142857142858
+      ],
+      "label": "5° 斜边 E1-3 · V",
+      "params": {
+        "auto_detect": true,
+        "target_family": "slanted_edge"
+      },
+      "enabled": true
+    },
+    {
+      "id": "E2-1-H",
+      "kind": "edge",
+      "box": [
+        0.1515398523273228,
+        0.39646228346963724,
+        0.06262626262626263,
+        0.045714285714285714
+      ],
+      "label": "5° 斜边 E2-1 · H",
+      "params": {
+        "auto_detect": true,
+        "target_family": "slanted_edge"
+      },
+      "enabled": true
+    },
+    {
+      "id": "E2-1-V",
+      "kind": "edge",
+      "box": [
+        0.21260242582954944,
+        0.4524158863867375,
+        0.03232323232323232,
+        0.08857142857142858
+      ],
+      "label": "5° 斜边 E2-1 · V",
+      "params": {
+        "auto_detect": true,
+        "target_family": "slanted_edge"
+      },
+      "enabled": true
+    },
+    {
+      "id": "E2-2-H",
+      "kind": "edge",
+      "box": [
+        0.47308867387614434,
+        0.39646228346963724,
+        0.06262626262626263,
+        0.045714285714285714
+      ],
+      "label": "5° 斜边 E2-2 · H",
+      "params": {
+        "auto_detect": true,
+        "target_family": "slanted_edge"
+      },
+      "enabled": true
+    },
+    {
+      "id": "E2-2-V",
+      "kind": "edge",
+      "box": [
+        0.5341512473783709,
+        0.4524158863867375,
+        0.03232323232323232,
+        0.08857142857142858
+      ],
+      "label": "5° 斜边 E2-2 · V",
+      "params": {
+        "auto_detect": true,
+        "target_family": "slanted_edge"
+      },
+      "enabled": true
+    },
+    {
+      "id": "E2-3-H",
+      "kind": "edge",
+      "box": [
+        0.7946374954249659,
+        0.39646228346963724,
+        0.06262626262626263,
+        0.045714285714285714
+      ],
+      "label": "5° 斜边 E2-3 · H",
+      "params": {
+        "auto_detect": true,
+        "target_family": "slanted_edge"
+      },
+      "enabled": true
+    },
+    {
+      "id": "E2-3-V",
+      "kind": "edge",
+      "box": [
+        0.8557000689271924,
+        0.4524158863867375,
+        0.03232323232323232,
+        0.08857142857142858
+      ],
+      "label": "5° 斜边 E2-3 · V",
+      "params": {
+        "auto_detect": true,
+        "target_family": "slanted_edge"
+      },
+      "enabled": true
+    },
+    {
+      "id": "E3-1-H",
+      "kind": "edge",
+      "box": [
+        0.1515398523273228,
+        0.6583670453743992,
+        0.06262626262626263,
+        0.045714285714285714
+      ],
+      "label": "5° 斜边 E3-1 · H",
+      "params": {
+        "auto_detect": true,
+        "target_family": "slanted_edge"
+      },
+      "enabled": true
+    },
+    {
+      "id": "E3-1-V",
+      "kind": "edge",
+      "box": [
+        0.21260242582954944,
+        0.7143206482914993,
+        0.03232323232323232,
+        0.08857142857142858
+      ],
+      "label": "5° 斜边 E3-1 · V",
+      "params": {
+        "auto_detect": true,
+        "target_family": "slanted_edge"
+      },
+      "enabled": true
+    },
+    {
+      "id": "E3-2-H",
+      "kind": "edge",
+      "box": [
+        0.47308867387614434,
+        0.6583670453743992,
+        0.06262626262626263,
+        0.045714285714285714
+      ],
+      "label": "5° 斜边 E3-2 · H",
+      "params": {
+        "auto_detect": true,
+        "target_family": "slanted_edge"
+      },
+      "enabled": true
+    },
+    {
+      "id": "E3-2-V",
+      "kind": "edge",
+      "box": [
+        0.5341512473783709,
+        0.7143206482914993,
+        0.03232323232323232,
+        0.08857142857142858
+      ],
+      "label": "5° 斜边 E3-2 · V",
+      "params": {
+        "auto_detect": true,
+        "target_family": "slanted_edge"
+      },
+      "enabled": true
+    },
+    {
+      "id": "E3-3-H",
+      "kind": "edge",
+      "box": [
+        0.7946374954249659,
+        0.6583670453743992,
+        0.06262626262626263,
+        0.045714285714285714
+      ],
+      "label": "5° 斜边 E3-3 · H",
+      "params": {
+        "auto_detect": true,
+        "target_family": "slanted_edge"
+      },
+      "enabled": true
+    },
+    {
+      "id": "E3-3-V",
+      "kind": "edge",
+      "box": [
+        0.8557000689271924,
+        0.7143206482914993,
+        0.03232323232323232,
+        0.08857142857142858
+      ],
+      "label": "5° 斜边 E3-3 · V",
+      "params": {
+        "auto_detect": true,
+        "target_family": "slanted_edge"
+      },
+      "enabled": true
+    }
+  ],
+  "physical_size_mm": [
+    297.0,
+    210.0
+  ],
+  "reference_size": [
+    2970,
+    2100
+  ],
+  "calibrated": false,
+  "fiducials": [],
+  "preview": "../previews/generic-slanted-edge.png",
+  "source_path": "../originals/generic-slanted-edge.svg",
+  "source_page": 0,
+  "asset_license": "CC0-1.0; MUTEX Imatest contributors",
+  "schema_version": 1,
+  "notes": "原创 CC0 数学图案。默认未确认打印尺度；全卡与局部均可自动检测，只有与此图配准成功时可保留本图位置。黑白二值星图测 CTF，不能当作正弦 MTF。斜边可测 SFR、MTF、过冲与RGB边缘法线位移；单张照片不提供轴向最佳焦位。",
+  "aliases": []
+}

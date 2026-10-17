@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mutex-imatest"
+version = "0.7.1"
+description = "Offline optical metrology for scanner and camera focus"
+readme = "README.md"
+requires-python = ">=3.12"
+license = "GPL-3.0-or-later"
+dependencies = [
+ "numpy>=2.2", "scipy>=1.14", "PySide6>=6.8", "pyqtgraph>=0.13",
+ "rawpy>=0.25", "tifffile>=2025.1", "imagecodecs>=2025.1", "Pillow>=11",
+ "opencv-python-headless>=4.10", "psutil>=6", "watchdog>=6", "msgpack>=1",
+ "pyvips>=3", "pyvips-binary>=8.16", "platformdirs>=4", "cryptography>=50"
+]
+[project.optional-dependencies]
+color = ["colour-science>=0.4"]
+reports = ["matplotlib>=3.10", "reportlab>=4.4"]
+dev = ["pytest>=8", "pytest-qt>=4", "pyinstaller>=6"]
+[project.scripts]
+mutex-imatest = "mutex_imatest.cli:main"
+[tool.setuptools.packages.find]
+where = ["src"]
+[tool.setuptools.package-data]
+mutex_imatest = ["assets/*"]
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+qt_api = "pyside6"
+addopts = "-q"

@@ -1,0 +1,245 @@
+{
+  "format": "MUTEX Public Template Library",
+  "version": 1,
+  "reviewed_on": "2026-10-17",
+  "charts": [
+    {
+      "id": "public-generic-siemens-slanted-v1",
+      "name": "通用西门子星图 / 斜边 · 原创",
+      "definition": "definitions/generic-siemens-slanted.json",
+      "license": "CC0-1.0",
+      "author": "MUTEX Imatest contributors",
+      "printing_dimensions_mm": [
+        297,
+        210
+      ],
+      "calibrated_by_default": false
+    },
+    {
+      "id": "public-generic-slanted-edge-v1",
+      "name": "通用斜边 · 3×3 双方向 · 原创",
+      "definition": "definitions/generic-slanted-edge.json",
+      "license": "CC0-1.0",
+      "author": "MUTEX Imatest contributors",
+      "printing_dimensions_mm": [
+        297,
+        210
+      ],
+      "calibrated_by_default": false
+    },
+    {
+      "id": "public-generic-iso12233-style-v1",
+      "name": "通用 ISO12233 风格 · 原创兼容图",
+      "definition": "definitions/generic-iso12233-style.json",
+      "license": "CC0-1.0",
+      "author": "MUTEX Imatest contributors",
+      "printing_dimensions_mm": [
+        297,
+        210
+      ],
+      "calibrated_by_default": false
+    },
+    {
+      "id": "public-commons-siemens-v1",
+      "name": "开放图卡 · Siemens star · Wimmer",
+      "definition": "definitions/commons-siemens.json",
+      "license": "CC-BY-SA-3.0",
+      "author": "Leonhard Wimmer; MUTEX adaptation",
+      "printing_dimensions_mm": [
+        100,
+        100
+      ],
+      "calibrated_by_default": false,
+      "source_page": "https://commons.wikimedia.org/wiki/File:Siemens_star.svg",
+      "modifications": "white background; 100 mm canvas; inert obsolete DTD removed; geometry unchanged"
+    },
+    {
+      "id": "public-commons-usaf-v1",
+      "name": "开放图卡 · USAF1951 · Setreset",
+      "definition": "definitions/commons-usaf.json",
+      "license": "CC-BY-SA-3.0",
+      "author": "Setreset; Mikhail Ryazanov; MUTEX adaptation",
+      "printing_dimensions_mm": [
+        69.05498,
+        73.0670228888889
+      ],
+      "calibrated_by_default": false,
+      "source_page": "https://commons.wikimedia.org/wiki/File:USAF-1951.svg",
+      "modifications": "white background; explicit viewBox; legacy 90 px/in physical dimensions; geometry unchanged"
+    },
+    {
+      "id": "public-generic-checkerboard-v1",
+      "name": "通用棋盘格 · 9×7 内角点 · 原创",
+      "definition": "definitions/generic-checkerboard.json",
+      "license": "CC0-1.0",
+      "author": "MUTEX Imatest contributors",
+      "printing_dimensions_mm": [
+        297,
+        210
+      ],
+      "calibrated_by_default": false
+    }
+  ],
+  "files": [
+    {
+      "path": "ATTRIBUTION.md",
+      "bytes": 3426,
+      "sha256": "a15aabec82dcd8a92660d541e314f63a6963f1458a69f4ef5a7af2d8bf8a4487"
+    },
+    {
+      "path": "definitions/commons-siemens.json",
+      "bytes": 1257,
+      "sha256": "c0c38fdc273a76b6781cbcc8f85336636e8a63af06751565e183e50bd921f501"
+    },
+    {
+      "path": "definitions/commons-usaf.json",
+      "bytes": 24601,
+      "sha256": "6df3167f9f0231f0c467b48b16a44840c0cfd5e089b638ba9ee1367f75c5c9e1"
+    },
+    {
+      "path": "definitions/generic-checkerboard.json",
+      "bytes": 1594,
+      "sha256": "80847f070ff67b681d7bc41af3c1754ef457b84c1ceb1b8c4fe10f2a2d5771ff"
+    },
+    {
+      "path": "definitions/generic-iso12233-style.json",
+      "bytes": 8129,
+      "sha256": "f432aeb62a15cc91cacb5bd6283ddc718ee0b6c0348ea82b0cfab4237bcdd1b7"
+    },
+    {
+      "path": "definitions/generic-siemens-slanted.json",
+      "bytes": 11886,
+      "sha256": "88d11972a97cae19031e933e631e4886abbdb85349515c6aa700c82a5c61812c"
+    },
+    {
+      "path": "definitions/generic-slanted-edge.json",
+      "bytes": 7449,
+      "sha256": "cee9787f523fd81e24fb2b8dbb95a897646cf91eb71fe4c4d5cc1de23553f591"
+    },
+    {
+      "path": "licenses/CC-BY-SA-3.0.txt",
+      "bytes": 22240,
+      "sha256": "3f941b3b89cf7b8370ceb83cc76d2120d471b58735d8ca60238a751a48d7f72f"
+    },
+    {
+      "path": "licenses/CC0-1.0.txt",
+      "bytes": 7048,
+      "sha256": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499"
+    },
+    {
+      "path": "originals/commons-siemens.pdf",
+      "bytes": 6139,
+      "sha256": "8dfa33551825cab60d1c341b403bdb7e774aff7f797ac0fbd3d90eaf77124ee8"
+    },
+    {
+      "path": "originals/commons-siemens.svg",
+      "bytes": 1971,
+      "sha256": "856c33a7da8a3b23532c84ff6e2cbce13066b75bce5ecf453c899a9b7f49b60d"
+    },
+    {
+      "path": "originals/commons-usaf.pdf",
+      "bytes": 15858,
+      "sha256": "5375f5d0ccf809452f51432dba70bc2e37ec4e9cd23490f6e77ec9a38fa198cf"
+    },
+    {
+      "path": "originals/commons-usaf.svg",
+      "bytes": 46185,
+      "sha256": "c18514df6c612e3907161c4697c618dd95a18556a3aa2034c4eb23c274dc7eae"
+    },
+    {
+      "path": "originals/generic-checkerboard.pdf",
+      "bytes": 13748,
+      "sha256": "51af0648b36b19523d303f5c3998eddb2c77c2d81d6ad3acd2743b028fc02e00"
+    },
+    {
+      "path": "originals/generic-checkerboard.svg",
+      "bytes": 16506,
+      "sha256": "10472a674035d367171c53bc5ea172a07348c31369a1a476f2312a18154c786f"
+    },
+    {
+      "path": "originals/generic-iso12233-style.pdf",
+      "bytes": 747633,
+      "sha256": "11a9b236a32ec305bedac124ee6ee9727efab478d35579d9e33162e9c8b58c99"
+    },
+    {
+      "path": "originals/generic-iso12233-style.svg",
+      "bytes": 3946580,
+      "sha256": "ba4148cadebc1c4292c3a04ca06072ad8758cc12b0a04b7d9331e5ee7bbc6cd4"
+    },
+    {
+      "path": "originals/generic-siemens-slanted.pdf",
+      "bytes": 46892,
+      "sha256": "2fadc75844d0b34f46461f386ed7977f30dffaae7512590a966759928b75f2fa"
+    },
+    {
+      "path": "originals/generic-siemens-slanted.svg",
+      "bytes": 117154,
+      "sha256": "e6c9cccb526175a7edea075376c8808c1f58f7c101c1bc9b5ed48b243df910d5"
+    },
+    {
+      "path": "originals/generic-slanted-edge.pdf",
+      "bytes": 13785,
+      "sha256": "5eca92db4a40781f500298c3f49255d79ab32197625bc51400c036309de76943"
+    },
+    {
+      "path": "originals/generic-slanted-edge.svg",
+      "bytes": 3905,
+      "sha256": "0cc790634aaa2e88c8f17f8d63c02810b6c68aa3d1f31d221e783531a9867155"
+    },
+    {
+      "path": "previews/commons-siemens.png",
+      "bytes": 152064,
+      "sha256": "164b75f61413830336757ad44d79a04d593eb6b5df90c051b0c971690122a31a"
+    },
+    {
+      "path": "previews/commons-usaf.png",
+      "bytes": 82722,
+      "sha256": "365df6a231ba824cabf232ac6d5b8781ceb02c9cc7cd77eb442f1f215670a160"
+    },
+    {
+      "path": "previews/generic-checkerboard.png",
+      "bytes": 76977,
+      "sha256": "d6590c7a6e6172c5a314361dc81877d8317a3db426140a6708f375dc187336cb"
+    },
+    {
+      "path": "previews/generic-iso12233-style.png",
+      "bytes": 260870,
+      "sha256": "08be066a3a3f1543a9f37633038b747e8e56af1760307739382dfc4b18d2876c"
+    },
+    {
+      "path": "previews/generic-siemens-slanted.png",
+      "bytes": 249859,
+      "sha256": "edf59e29d31da18ef62d8d63f2429b790875c8cc1af64f69922da2bf091c6381"
+    },
+    {
+      "path": "previews/generic-slanted-edge.png",
+      "bytes": 47625,
+      "sha256": "09c3b989a3fa607f910f4aea20a735be747bdbbc96c829456396595f65b506d7"
+    },
+    {
+      "path": "README.md",
+      "bytes": 4062,
+      "sha256": "5631e92df4415f5fcbf7857704600b5a86493cbeaed7d85e829ca56b4b1b752c"
+    },
+    {
+      "path": "TEST_METHODS.md",
+      "bytes": 3511,
+      "sha256": "1640023380ef7715cc3089bbd000854bb2b2bd440441e60027b535f26ebc958b"
+    },
+    {
+      "path": "upstream/commons-siemens/Siemens_star.svg",
+      "bytes": 1847,
+      "sha256": "361df3e44f6e3d4a6101c17bed9529feb03af8c0f1909cdaaeaa02fd499928a0"
+    },
+    {
+      "path": "upstream/commons-usaf/USAF-1951.svg",
+      "bytes": 45863,
+      "sha256": "b2431af9435025a965a4ca9de68512ffcae4870dd7f7aa202f144d9f5ab72059"
+    },
+    {
+      "path": "upstream-sources.json",
+      "bytes": 919,
+      "sha256": "f27a9a0946b6d06cd417de19a055edc74c25d19872a3f97fdee1177915fc7eee"
+    }
+  ]
+}

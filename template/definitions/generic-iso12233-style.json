@@ -1,0 +1,329 @@
+{
+  "id": "public-generic-iso12233-style-v1",
+  "name": "通用 ISO12233 风格 · 原创兼容图",
+  "regions": [
+    {
+      "id": "E-TL-H",
+      "kind": "edge",
+      "box": [
+        0.10709293780166124,
+        0.12967319797981636,
+        0.05636363636363636,
+        0.04114285714285715
+      ],
+      "label": "5° 斜边 E-TL · H",
+      "params": {
+        "auto_detect": true,
+        "target_family": "generic_iso12233"
+      },
+      "enabled": true
+    },
+    {
+      "id": "E-TL-V",
+      "kind": "edge",
+      "box": [
+        0.1620492539536652,
+        0.18003144060520662,
+        0.029090909090909094,
+        0.07971428571428571
+      ],
+      "label": "5° 斜边 E-TL · V",
+      "params": {
+        "auto_detect": true,
+        "target_family": "generic_iso12233"
+      },
+      "enabled": true
+    },
+    {
+      "id": "E-TR-H",
+      "kind": "edge",
+      "box": [
+        0.8444666751753986,
+        0.12967319797981636,
+        0.05636363636363636,
+        0.04114285714285715
+      ],
+      "label": "5° 斜边 E-TR · H",
+      "params": {
+        "auto_detect": true,
+        "target_family": "generic_iso12233"
+      },
+      "enabled": true
+    },
+    {
+      "id": "E-TR-V",
+      "kind": "edge",
+      "box": [
+        0.8994229913274026,
+        0.18003144060520662,
+        0.029090909090909094,
+        0.07971428571428571
+      ],
+      "label": "5° 斜边 E-TR · V",
+      "params": {
+        "auto_detect": true,
+        "target_family": "generic_iso12233"
+      },
+      "enabled": true
+    },
+    {
+      "id": "E-BL-H",
+      "kind": "edge",
+      "box": [
+        0.10709293780166124,
+        0.6915779598845783,
+        0.05636363636363636,
+        0.04114285714285715
+      ],
+      "label": "5° 斜边 E-BL · H",
+      "params": {
+        "auto_detect": true,
+        "target_family": "generic_iso12233"
+      },
+      "enabled": true
+    },
+    {
+      "id": "E-BL-V",
+      "kind": "edge",
+      "box": [
+        0.1620492539536652,
+        0.7419362025099685,
+        0.029090909090909094,
+        0.07971428571428571
+      ],
+      "label": "5° 斜边 E-BL · V",
+      "params": {
+        "auto_detect": true,
+        "target_family": "generic_iso12233"
+      },
+      "enabled": true
+    },
+    {
+      "id": "E-BR-H",
+      "kind": "edge",
+      "box": [
+        0.8444666751753986,
+        0.6915779598845783,
+        0.05636363636363636,
+        0.04114285714285715
+      ],
+      "label": "5° 斜边 E-BR · H",
+      "params": {
+        "auto_detect": true,
+        "target_family": "generic_iso12233"
+      },
+      "enabled": true
+    },
+    {
+      "id": "E-BR-V",
+      "kind": "edge",
+      "box": [
+        0.8994229913274026,
+        0.7419362025099685,
+        0.029090909090909094,
+        0.07971428571428571
+      ],
+      "label": "5° 斜边 E-BR · V",
+      "params": {
+        "auto_detect": true,
+        "target_family": "generic_iso12233"
+      },
+      "enabled": true
+    },
+    {
+      "id": "S-C",
+      "kind": "star",
+      "box": [
+        0.4225589225589226,
+        0.3904761904761905,
+        0.15488215488215487,
+        0.21904761904761905
+      ],
+      "label": "西门子星 S-C · 36 周期",
+      "params": {
+        "auto_detect": true,
+        "target_family": "generic_iso12233",
+        "cycles": 36,
+        "pattern": "binary",
+        "center": [
+          0.5,
+          0.5
+        ]
+      },
+      "enabled": true
+    },
+    {
+      "id": "S-L",
+      "kind": "star",
+      "box": [
+        0.25757575757575757,
+        0.44047619047619047,
+        0.08417508417508418,
+        0.11904761904761904
+      ],
+      "label": "西门子星 S-L · 36 周期",
+      "params": {
+        "auto_detect": true,
+        "target_family": "generic_iso12233",
+        "cycles": 36,
+        "pattern": "binary",
+        "center": [
+          0.5,
+          0.5
+        ]
+      },
+      "enabled": true
+    },
+    {
+      "id": "S-R",
+      "kind": "star",
+      "box": [
+        0.6582491582491582,
+        0.44047619047619047,
+        0.08417508417508418,
+        0.11904761904761904
+      ],
+      "label": "西门子星 S-R · 36 周期",
+      "params": {
+        "auto_detect": true,
+        "target_family": "generic_iso12233",
+        "cycles": 36,
+        "pattern": "binary",
+        "center": [
+          0.5,
+          0.5
+        ]
+      },
+      "enabled": true
+    },
+    {
+      "id": "W-T",
+      "kind": "wedge",
+      "box": [
+        0.27946127946127947,
+        0.14761904761904762,
+        0.19528619528619529,
+        0.15714285714285714
+      ],
+      "label": "连续频率楔形 W-T",
+      "params": {
+        "target_family": "generic_iso12233",
+        "direction": "vertical",
+        "pattern": "binary",
+        "frequency_law": "linear_cycles_across_roi",
+        "frequency_samples": [
+          {
+            "t": 0,
+            "cycles_across": 6
+          },
+          {
+            "t": 1,
+            "cycles_across": 36
+          }
+        ]
+      },
+      "enabled": true
+    },
+    {
+      "id": "W-B",
+      "kind": "wedge",
+      "box": [
+        0.5252525252525253,
+        0.6904761904761905,
+        0.19528619528619529,
+        0.15714285714285714
+      ],
+      "label": "连续频率楔形 W-B",
+      "params": {
+        "target_family": "generic_iso12233",
+        "direction": "vertical",
+        "pattern": "binary",
+        "frequency_law": "linear_cycles_across_roi",
+        "frequency_samples": [
+          {
+            "t": 0,
+            "cycles_across": 6
+          },
+          {
+            "t": 1,
+            "cycles_across": 36
+          }
+        ]
+      },
+      "enabled": true
+    },
+    {
+      "id": "W-L",
+      "kind": "wedge",
+      "box": [
+        0.06397306397306397,
+        0.37142857142857144,
+        0.10101010101010101,
+        0.21904761904761905
+      ],
+      "label": "连续频率楔形 W-L",
+      "params": {
+        "target_family": "generic_iso12233",
+        "direction": "horizontal",
+        "pattern": "binary",
+        "frequency_law": "linear_cycles_across_roi",
+        "frequency_samples": [
+          {
+            "t": 0,
+            "cycles_across": 6
+          },
+          {
+            "t": 1,
+            "cycles_across": 36
+          }
+        ]
+      },
+      "enabled": true
+    },
+    {
+      "id": "W-R",
+      "kind": "wedge",
+      "box": [
+        0.835016835016835,
+        0.37142857142857144,
+        0.10101010101010101,
+        0.21904761904761905
+      ],
+      "label": "连续频率楔形 W-R",
+      "params": {
+        "target_family": "generic_iso12233",
+        "direction": "horizontal",
+        "pattern": "binary",
+        "frequency_law": "linear_cycles_across_roi",
+        "frequency_samples": [
+          {
+            "t": 0,
+            "cycles_across": 6
+          },
+          {
+            "t": 1,
+            "cycles_across": 36
+          }
+        ]
+      },
+      "enabled": true
+    }
+  ],
+  "physical_size_mm": [
+    297.0,
+    210.0
+  ],
+  "reference_size": [
+    2970,
+    2100
+  ],
+  "calibrated": false,
+  "fiducials": [],
+  "preview": "../previews/generic-iso12233-style.png",
+  "source_path": "../originals/generic-iso12233-style.svg",
+  "source_page": 0,
+  "asset_license": "CC0-1.0; MUTEX Imatest contributors",
+  "schema_version": 1,
+  "notes": "原创 CC0 风格兼容图，不是 ISO 官方图、不声明 ISO 合规或认证。测量入口兼容整图/局部，陌生卡检测的坐标不沿用本图物理尺寸。含5°正交斜边、36周期二值星和6→36周期/横截线的线性楔形。原生像素提供SFR/MTF、CTF、阈值分辨率、方向差异与RGB位移；lp/mm/DPI需要用户确认打印尺寸或另行标定。灰阶只为相对数字信号观察，不可据此宣称色差/反射率/OECF真值。",
+  "aliases": []
+}

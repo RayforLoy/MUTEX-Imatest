@@ -1,0 +1,983 @@
+{
+  "id": "public-commons-usaf-v1",
+  "name": "开放图卡 · USAF1951 · Setreset",
+  "regions": [
+    {
+      "id": "usaf-g-2e1-horizontal",
+      "kind": "usaf",
+      "box": [
+        0.7585025152544312,
+        0.6326079482377096,
+        0.09267977391155113,
+        0.1751816258779011
+      ],
+      "label": "USAF -2/1 · horizontal",
+      "params": {
+        "group": -2,
+        "element": 1,
+        "direction": "horizontal",
+        "unit_id": "commons-usaf",
+        "frequency_index": -12,
+        "multi_frequency": true
+      },
+      "enabled": true
+    },
+    {
+      "id": "usaf-g-2e1-vertical",
+      "kind": "usaf",
+      "box": [
+        0.5094256561755413,
+        0.6764033255452225,
+        0.18535954782310227,
+        0.08759081293895055
+      ],
+      "label": "USAF -2/1 · vertical",
+      "params": {
+        "group": -2,
+        "element": 1,
+        "direction": "vertical",
+        "unit_id": "commons-usaf",
+        "frequency_index": -12,
+        "multi_frequency": true
+      },
+      "enabled": true
+    },
+    {
+      "id": "usaf-g-2e2-horizontal",
+      "kind": "usaf",
+      "box": [
+        0.15127691402225155,
+        0.11470005207329068,
+        0.08256748378006162,
+        0.15606755867836297
+      ],
+      "label": "USAF -2/2 · horizontal",
+      "params": {
+        "group": -2,
+        "element": 2,
+        "direction": "horizontal",
+        "unit_id": "commons-usaf",
+        "frequency_index": -11,
+        "multi_frequency": true
+      },
+      "enabled": true
+    },
+    {
+      "id": "usaf-g-2e2-vertical",
+      "kind": "usaf",
+      "box": [
+        0.2906095132269824,
+        0.1537169157627808,
+        0.16513496756012325,
+        0.07803377933918149
+      ],
+      "label": "USAF -2/2 · vertical",
+      "params": {
+        "group": -2,
+        "element": 2,
+        "direction": "vertical",
+        "unit_id": "commons-usaf",
+        "frequency_index": -11,
+        "multi_frequency": true
+      },
+      "enabled": true
+    },
+    {
+      "id": "usaf-g-2e3-horizontal",
+      "kind": "usaf",
+      "box": [
+        0.1487431504683466,
+        0.28740393779846635,
+        0.0735585454301914,
+        0.13903902698308504
+      ],
+      "label": "USAF -2/3 · horizontal",
+      "params": {
+        "group": -2,
+        "element": 3,
+        "direction": "horizontal",
+        "unit_id": "commons-usaf",
+        "frequency_index": -10,
+        "multi_frequency": true
+      },
+      "enabled": true
+    },
+    {
+      "id": "usaf-g-2e3-vertical",
+      "kind": "usaf",
+      "box": [
+        0.2728731694454154,
+        0.3221636713988257,
+        0.1471170908603828,
+        0.06951951349154252
+      ],
+      "label": "USAF -2/3 · vertical",
+      "params": {
+        "group": -2,
+        "element": 3,
+        "direction": "vertical",
+        "unit_id": "commons-usaf",
+        "frequency_index": -10,
+        "multi_frequency": true
+      },
+      "enabled": true
+    },
+    {
+      "id": "usaf-g-2e4-horizontal",
+      "kind": "usaf",
+      "box": [
+        0.14648582275639804,
+        0.44247444979039074,
+        0.06553257246961841,
+        0.12386847861913386
+      ],
+      "label": "USAF -2/4 · horizontal",
+      "params": {
+        "group": -2,
+        "element": 4,
+        "direction": "horizontal",
+        "unit_id": "commons-usaf",
+        "frequency_index": -9,
+        "multi_frequency": true
+      },
+      "enabled": true
+    },
+    {
+      "id": "usaf-g-2e4-vertical",
+      "kind": "usaf",
+      "box": [
+        0.2570720152469727,
+        0.4734415488251582,
+        0.13106514493923682,
+        0.06193423930956693
+      ],
+      "label": "USAF -2/4 · vertical",
+      "params": {
+        "group": -2,
+        "element": 4,
+        "direction": "vertical",
+        "unit_id": "commons-usaf",
+        "frequency_index": -9,
+        "multi_frequency": true
+      },
+      "enabled": true
+    },
+    {
+      "id": "usaf-g-2e5-horizontal",
+      "kind": "usaf",
+      "box": [
+        0.1444748158718571,
+        0.5783988274971672,
+        0.05838231308357858,
+        0.11035318815359398
+      ],
+      "label": "USAF -2/5 · horizontal",
+      "params": {
+        "group": -2,
+        "element": 5,
+        "direction": "horizontal",
+        "unit_id": "commons-usaf",
+        "frequency_index": -8,
+        "multi_frequency": true
+      },
+      "enabled": true
+    },
+    {
+      "id": "usaf-g-2e5-vertical",
+      "kind": "usaf",
+      "box": [
+        0.24299494821823814,
+        0.6059871061654,
+        0.11676462616715716,
+        0.05517659407679699
+      ],
+      "label": "USAF -2/5 · vertical",
+      "params": {
+        "group": -2,
+        "element": 5,
+        "direction": "vertical",
+        "unit_id": "commons-usaf",
+        "frequency_index": -8,
+        "multi_frequency": true
+      },
+      "enabled": true
+    },
+    {
+      "id": "usaf-g-2e6-horizontal",
+      "kind": "usaf",
+      "box": [
+        0.14268324561704893,
+        0.7004954773476907,
+        0.052012219059157684,
+        0.09831255208926634
+      ],
+      "label": "USAF -2/6 · horizontal",
+      "params": {
+        "group": -2,
+        "element": 6,
+        "direction": "horizontal",
+        "unit_id": "commons-usaf",
+        "frequency_index": -7,
+        "multi_frequency": true
+      },
+      "enabled": true
+    },
+    {
+      "id": "usaf-g-2e6-vertical",
+      "kind": "usaf",
+      "box": [
+        0.23045384658658274,
+        0.7250735990042102,
+        0.10402443811831537,
+        0.04915627604463317
+      ],
+      "label": "USAF -2/6 · vertical",
+      "params": {
+        "group": -2,
+        "element": 6,
+        "direction": "vertical",
+        "unit_id": "commons-usaf",
+        "frequency_index": -7,
+        "multi_frequency": true
+      },
+      "enabled": true
+    },
+    {
+      "id": "usaf-g-1e1-horizontal",
+      "kind": "usaf",
+      "box": [
+        0.8192774547884404,
+        0.12377286255368393,
+        0.04633988695577557,
+        0.08759081293895055
+      ],
+      "label": "USAF -1/1 · horizontal",
+      "params": {
+        "group": -1,
+        "element": 1,
+        "direction": "horizontal",
+        "unit_id": "commons-usaf",
+        "frequency_index": -6,
+        "multi_frequency": true
+      },
+      "enabled": true
+    },
+    {
+      "id": "usaf-g-1e1-vertical",
+      "kind": "usaf",
+      "box": [
+        0.6947390252489953,
+        0.14567055120744038,
+        0.09267977391155113,
+        0.04379540646947527
+      ],
+      "label": "USAF -1/1 · vertical",
+      "params": {
+        "group": -1,
+        "element": 1,
+        "direction": "vertical",
+        "unit_id": "commons-usaf",
+        "frequency_index": -6,
+        "multi_frequency": true
+      },
+      "enabled": true
+    },
+    {
+      "id": "usaf-g-1e2-horizontal",
+      "kind": "usaf",
+      "box": [
+        0.8257556332326657,
+        0.2201788947572153,
+        0.04128374189003081,
+        0.07803377933918149
+      ],
+      "label": "USAF -1/2 · horizontal",
+      "params": {
+        "group": -1,
+        "element": 2,
+        "direction": "horizontal",
+        "unit_id": "commons-usaf",
+        "frequency_index": -5,
+        "multi_frequency": true
+      },
+      "enabled": true
+    },
+    {
+      "id": "usaf-g-1e2-vertical",
+      "kind": "usaf",
+      "box": [
+        0.7148055917402693,
+        0.2396873266019604,
+        0.08256748378006162,
+        0.03901688966959074
+      ],
+      "label": "USAF -1/2 · vertical",
+      "params": {
+        "group": -1,
+        "element": 2,
+        "direction": "vertical",
+        "unit_id": "commons-usaf",
+        "frequency_index": -5,
+        "multi_frequency": true
+      },
+      "enabled": true
+    },
+    {
+      "id": "usaf-g-1e3-horizontal",
+      "kind": "usaf",
+      "box": [
+        0.8315269908314304,
+        0.3067722446575902,
+        0.03677927317849481,
+        0.06951951436745112
+      ],
+      "label": "USAF -1/3 · horizontal",
+      "params": {
+        "group": -1,
+        "element": 3,
+        "direction": "horizontal",
+        "unit_id": "commons-usaf",
+        "frequency_index": -4,
+        "multi_frequency": true
+      },
+      "enabled": true
+    },
+    {
+      "id": "usaf-g-1e3-vertical",
+      "kind": "usaf",
+      "box": [
+        0.7326827073824161,
+        0.3241521116767469,
+        0.07355854635698962,
+        0.03475975718372556
+      ],
+      "label": "USAF -1/3 · vertical",
+      "params": {
+        "group": -1,
+        "element": 3,
+        "direction": "vertical",
+        "unit_id": "commons-usaf",
+        "frequency_index": -4,
+        "multi_frequency": true
+      },
+      "enabled": true
+    },
+    {
+      "id": "usaf-g-1e4-horizontal",
+      "kind": "usaf",
+      "box": [
+        0.8366685936516077,
+        0.38334185724396164,
+        0.032766286234809205,
+        0.06193423930956693
+      ],
+      "label": "USAF -1/4 · horizontal",
+      "params": {
+        "group": -1,
+        "element": 4,
+        "direction": "horizontal",
+        "unit_id": "commons-usaf",
+        "frequency_index": -3,
+        "multi_frequency": true
+      },
+      "enabled": true
+    },
+    {
+      "id": "usaf-g-1e4-vertical",
+      "kind": "usaf",
+      "box": [
+        0.7486092111715108,
+        0.3988254067613452,
+        0.06553257246961915,
+        0.030967119654783815
+      ],
+      "label": "USAF -1/4 · vertical",
+      "params": {
+        "group": -1,
+        "element": 4,
+        "direction": "vertical",
+        "unit_id": "commons-usaf",
+        "frequency_index": -3,
+        "multi_frequency": true
+      },
+      "enabled": true
+    },
+    {
+      "id": "usaf-g-1e5-horizontal",
+      "kind": "usaf",
+      "box": [
+        0.8412492472215012,
+        0.45130404416609393,
+        0.029191156541789477,
+        0.05517659407679734
+      ],
+      "label": "USAF -1/5 · horizontal",
+      "params": {
+        "group": -1,
+        "element": 5,
+        "direction": "horizontal",
+        "unit_id": "commons-usaf",
+        "frequency_index": -2,
+        "multi_frequency": true
+      },
+      "enabled": true
+    },
+    {
+      "id": "usaf-g-1e5-vertical",
+      "kind": "usaf",
+      "box": [
+        0.7627980245065215,
+        0.46509818350021037,
+        0.05838231308357858,
+        0.027588297038398494
+      ],
+      "label": "USAF -1/5 · vertical",
+      "params": {
+        "group": -1,
+        "element": 5,
+        "direction": "vertical",
+        "unit_id": "commons-usaf",
+        "frequency_index": -2,
+        "multi_frequency": true
+      },
+      "enabled": true
+    },
+    {
+      "id": "usaf-g-1e6-horizontal",
+      "kind": "usaf",
+      "box": [
+        0.8453300793611158,
+        0.5133180336808925,
+        0.026006109529578658,
+        0.04915627604463282
+      ],
+      "label": "USAF -1/6 · horizontal",
+      "params": {
+        "group": -1,
+        "element": 6,
+        "direction": "horizontal",
+        "unit_id": "commons-usaf",
+        "frequency_index": -1,
+        "multi_frequency": true
+      },
+      "enabled": true
+    },
+    {
+      "id": "usaf-g-1e6-vertical",
+      "kind": "usaf",
+      "box": [
+        0.77543866934677,
+        0.5256070945091522,
+        0.052012219059157316,
+        0.02457813802231641
+      ],
+      "label": "USAF -1/6 · vertical",
+      "params": {
+        "group": -1,
+        "element": 6,
+        "direction": "vertical",
+        "unit_id": "commons-usaf",
+        "frequency_index": -1,
+        "multi_frequency": true
+      },
+      "enabled": true
+    },
+    {
+      "id": "usaf-g0e1-horizontal",
+      "kind": "usaf",
+      "box": [
+        0.4567535177556266,
+        0.5071641400658713,
+        0.023169943477887783,
+        0.04379540646947527
+      ],
+      "label": "USAF 0/1 · horizontal",
+      "params": {
+        "group": 0,
+        "element": 1,
+        "direction": "horizontal",
+        "unit_id": "commons-usaf",
+        "frequency_index": 0,
+        "multi_frequency": true
+      },
+      "enabled": true
+    },
+    {
+      "id": "usaf-g0e1-vertical",
+      "kind": "usaf",
+      "box": [
+        0.4958527890474617,
+        0.5181129843927496,
+        0.04633988695577482,
+        0.021897703234737283
+      ],
+      "label": "USAF 0/1 · vertical",
+      "params": {
+        "group": 0,
+        "element": 1,
+        "direction": "vertical",
+        "unit_id": "commons-usaf",
+        "frequency_index": 0,
+        "multi_frequency": true
+      },
+      "enabled": true
+    },
+    {
+      "id": "usaf-g0e2-horizontal",
+      "kind": "usaf",
+      "box": [
+        0.611087990596544,
+        0.37768715636848754,
+        0.020641870945015406,
+        0.03901688966959074
+      ],
+      "label": "USAF 0/2 · horizontal",
+      "params": {
+        "group": 0,
+        "element": 2,
+        "direction": "horizontal",
+        "unit_id": "commons-usaf",
+        "frequency_index": 1,
+        "multi_frequency": true
+      },
+      "enabled": true
+    },
+    {
+      "id": "usaf-g0e2-vertical",
+      "kind": "usaf",
+      "box": [
+        0.5556129698503459,
+        0.38744137229086006,
+        0.04128374189003081,
+        0.01950844483479537
+      ],
+      "label": "USAF 0/2 · vertical",
+      "params": {
+        "group": 0,
+        "element": 2,
+        "direction": "vertical",
+        "unit_id": "commons-usaf",
+        "frequency_index": 1,
+        "multi_frequency": true
+      },
+      "enabled": true
+    },
+    {
+      "id": "usaf-g0e3-horizontal",
+      "kind": "usaf",
+      "box": [
+        0.6139736693959263,
+        0.42086315680055225,
+        0.018389636589247405,
+        0.03475975718372556
+      ],
+      "label": "USAF 0/3 · horizontal",
+      "params": {
+        "group": 0,
+        "element": 3,
+        "direction": "horizontal",
+        "unit_id": "commons-usaf",
+        "frequency_index": 2,
+        "multi_frequency": true
+      },
+      "enabled": true
+    },
+    {
+      "id": "usaf-g0e3-vertical",
+      "kind": "usaf",
+      "box": [
+        0.5645515276714193,
+        0.4295530903101305,
+        0.03677927317849481,
+        0.01737987859186278
+      ],
+      "label": "USAF 0/3 · vertical",
+      "params": {
+        "group": 0,
+        "element": 3,
+        "direction": "vertical",
+        "unit_id": "commons-usaf",
+        "frequency_index": 2,
+        "multi_frequency": true
+      },
+      "enabled": true
+    },
+    {
+      "id": "usaf-g0e4-horizontal",
+      "kind": "usaf",
+      "box": [
+        0.6165444978874958,
+        0.4596307635866539,
+        0.016383143580803346,
+        0.03096712053069136
+      ],
+      "label": "USAF 0/4 · horizontal",
+      "params": {
+        "group": 0,
+        "element": 4,
+        "direction": "horizontal",
+        "unit_id": "commons-usaf",
+        "frequency_index": 3,
+        "multi_frequency": true
+      },
+      "enabled": true
+    },
+    {
+      "id": "usaf-g0e4-vertical",
+      "kind": "usaf",
+      "box": [
+        0.572514805402063,
+        0.4673725385643224,
+        0.03276628716160706,
+        0.015483560265345855
+      ],
+      "label": "USAF 0/4 · vertical",
+      "params": {
+        "group": 0,
+        "element": 4,
+        "direction": "vertical",
+        "unit_id": "commons-usaf",
+        "frequency_index": 3,
+        "multi_frequency": true
+      },
+      "enabled": true
+    },
+    {
+      "id": "usaf-g0e5-horizontal",
+      "kind": "usaf",
+      "box": [
+        0.6188348246724424,
+        0.4936118763602777,
+        0.014595578734293575,
+        0.02758829791430674
+      ],
+      "label": "USAF 0/5 · horizontal",
+      "params": {
+        "group": 0,
+        "element": 5,
+        "direction": "horizontal",
+        "unit_id": "commons-usaf",
+        "frequency_index": 4,
+        "multi_frequency": true
+      },
+      "enabled": true
+    },
+    {
+      "id": "usaf-g0e5-vertical",
+      "kind": "usaf",
+      "box": [
+        0.5796092120695682,
+        0.5005089462463127,
+        0.02919115746858715,
+        0.01379414895715337
+      ],
+      "label": "USAF 0/5 · vertical",
+      "params": {
+        "group": 0,
+        "element": 5,
+        "direction": "vertical",
+        "unit_id": "commons-usaf",
+        "frequency_index": 4,
+        "multi_frequency": true
+      },
+      "enabled": true
+    },
+    {
+      "id": "usaf-g0e6-horizontal",
+      "kind": "usaf",
+      "box": [
+        0.6208752340953722,
+        0.5241360319996452,
+        0.013003054764789699,
+        0.02457813802231711
+      ],
+      "label": "USAF 0/6 · horizontal",
+      "params": {
+        "group": 0,
+        "element": 6,
+        "direction": "horizontal",
+        "unit_id": "commons-usaf",
+        "frequency_index": 5,
+        "multi_frequency": true
+      },
+      "enabled": true
+    },
+    {
+      "id": "usaf-g0e6-vertical",
+      "kind": "usaf",
+      "box": [
+        0.5859295290881994,
+        0.5302805624137753,
+        0.026006109529578658,
+        0.012289069011158204
+      ],
+      "label": "USAF 0/6 · vertical",
+      "params": {
+        "group": 0,
+        "element": 6,
+        "direction": "vertical",
+        "unit_id": "commons-usaf",
+        "frequency_index": 5,
+        "multi_frequency": true
+      },
+      "enabled": true
+    },
+    {
+      "id": "usaf-g1e1-horizontal",
+      "kind": "usaf",
+      "box": [
+        0.45314474439376645,
+        0.3799553956824458,
+        0.011584971738944077,
+        0.021897703234737987
+      ],
+      "label": "USAF 1/1 · horizontal",
+      "params": {
+        "group": 1,
+        "element": 1,
+        "direction": "horizontal",
+        "unit_id": "commons-usaf",
+        "frequency_index": 6,
+        "multi_frequency": true
+      },
+      "enabled": true
+    },
+    {
+      "id": "usaf-g1e1-vertical",
+      "kind": "usaf",
+      "box": [
+        0.4726943800396839,
+        0.38542981784588487,
+        0.023169943477888155,
+        0.010948851617368993
+      ],
+      "label": "USAF 1/1 · vertical",
+      "params": {
+        "group": 1,
+        "element": 1,
+        "direction": "vertical",
+        "unit_id": "commons-usaf",
+        "frequency_index": 6,
+        "multi_frequency": true
+      },
+      "enabled": true
+    },
+    {
+      "id": "usaf-g1e2-horizontal",
+      "kind": "usaf",
+      "box": [
+        0.4527892667010511,
+        0.4040568911801661,
+        0.010320935472507703,
+        0.01950844483479537
+      ],
+      "label": "USAF 1/2 · horizontal",
+      "params": {
+        "group": 1,
+        "element": 2,
+        "direction": "horizontal",
+        "unit_id": "commons-usaf",
+        "frequency_index": 7,
+        "multi_frequency": true
+      },
+      "enabled": true
+    },
+    {
+      "id": "usaf-g1e2-vertical",
+      "kind": "usaf",
+      "box": [
+        0.47020584160164264,
+        0.4089339991413523,
+        0.020641870945015406,
+        0.009754222417397686
+      ],
+      "label": "USAF 1/2 · vertical",
+      "params": {
+        "group": 1,
+        "element": 2,
+        "direction": "vertical",
+        "unit_id": "commons-usaf",
+        "frequency_index": 7,
+        "multi_frequency": true
+      },
+      "enabled": true
+    },
+    {
+      "id": "usaf-g1e3-horizontal",
+      "kind": "usaf",
+      "box": [
+        0.4524725515895205,
+        0.42570521796948485,
+        0.009194817831224774,
+        0.017379877715954537
+      ],
+      "label": "USAF 1/3 · horizontal",
+      "params": {
+        "group": 1,
+        "element": 3,
+        "direction": "horizontal",
+        "unit_id": "commons-usaf",
+        "frequency_index": 8,
+        "multi_frequency": true
+      },
+      "enabled": true
+    },
+    {
+      "id": "usaf-g1e3-vertical",
+      "kind": "usaf",
+      "box": [
+        0.46798880337516485,
+        0.43005018450529703,
+        0.018389635662449916,
+        0.008689938857977444
+      ],
+      "label": "USAF 1/3 · vertical",
+      "params": {
+        "group": 1,
+        "element": 3,
+        "direction": "vertical",
+        "unit_id": "commons-usaf",
+        "frequency_index": 8,
+        "multi_frequency": true
+      },
+      "enabled": true
+    },
+    {
+      "id": "usaf-g1e4-horizontal",
+      "kind": "usaf",
+      "box": [
+        0.45219036341335467,
+        0.4448476337011743,
+        0.008191571327003022,
+        0.015483559389437962
+      ],
+      "label": "USAF 1/4 · horizontal",
+      "params": {
+        "group": 1,
+        "element": 4,
+        "direction": "horizontal",
+        "unit_id": "commons-usaf",
+        "frequency_index": 9,
+        "multi_frequency": true
+      },
+      "enabled": true
+    },
+    {
+      "id": "usaf-g1e4-vertical",
+      "kind": "usaf",
+      "box": [
+        0.4660136370836839,
+        0.44871852097103204,
+        0.016383142654005672,
+        0.007741779694718806
+      ],
+      "label": "USAF 1/4 · vertical",
+      "params": {
+        "group": 1,
+        "element": 4,
+        "direction": "vertical",
+        "unit_id": "commons-usaf",
+        "frequency_index": 9,
+        "multi_frequency": true
+      },
+      "enabled": true
+    },
+    {
+      "id": "usaf-g1e5-horizontal",
+      "kind": "usaf",
+      "box": [
+        0.45193900287873956,
+        0.4618381900879866,
+        0.007297788903747857,
+        0.013794148081245124
+      ],
+      "label": "USAF 1/5 · horizontal",
+      "params": {
+        "group": 1,
+        "element": 5,
+        "direction": "horizontal",
+        "unit_id": "commons-usaf",
+        "frequency_index": 10,
+        "multi_frequency": true
+      },
+      "enabled": true
+    },
+    {
+      "id": "usaf-g1e5-vertical",
+      "kind": "usaf",
+      "box": [
+        0.46425401903104446,
+        0.4652867248120271,
+        0.014595577807495715,
+        0.006897074040622562
+      ],
+      "label": "USAF 1/5 · vertical",
+      "params": {
+        "group": 1,
+        "element": 5,
+        "direction": "vertical",
+        "unit_id": "commons-usaf",
+        "frequency_index": 10,
+        "multi_frequency": true
+      },
+      "enabled": true
+    },
+    {
+      "id": "usaf-g1e6-horizontal",
+      "kind": "usaf",
+      "box": [
+        0.4517150397174234,
+        0.4773416748815893,
+        0.00650152691899592,
+        0.012289068135250313
+      ],
+      "label": "USAF 1/6 · horizontal",
+      "params": {
+        "group": 1,
+        "element": 6,
+        "direction": "horizontal",
+        "unit_id": "commons-usaf",
+        "frequency_index": 11,
+        "multi_frequency": true
+      },
+      "enabled": true
+    },
+    {
+      "id": "usaf-g1e6-vertical",
+      "kind": "usaf",
+      "box": [
+        0.4626863640566299,
+        0.48041393986967745,
+        0.013003053837991468,
+        0.00614453406762498
+      ],
+      "label": "USAF 1/6 · vertical",
+      "params": {
+        "group": 1,
+        "element": 6,
+        "direction": "vertical",
+        "unit_id": "commons-usaf",
+        "frequency_index": 11,
+        "multi_frequency": true
+      },
+      "enabled": true
+    }
+  ],
+  "physical_size_mm": [
+    69.05498,
+    73.0670228888889
+  ],
+  "reference_size": [
+    691,
+    731
+  ],
+  "calibrated": false,
+  "fiducials": [],
+  "preview": "../previews/commons-usaf.png",
+  "source_path": "../originals/commons-usaf.svg",
+  "source_page": 0,
+  "asset_license": "CC-BY-SA-3.0; Setreset; Mikhail Ryazanov; MUTEX adaptation",
+  "schema_version": 1,
+  "notes": "来源Wikimedia Commons；Setreset绘制、Mikhail Ryazanov排字修订；CC BY-SA 3.0。原图完整保留。衍生图增加白底/viewBox和旧版Inkscape 90px/in物理尺寸，48组正交三线条的几何未变；覆盖-2/1到1/6。默认未确认实物尺寸；应实测组-2元素1黑线宽2mm确认，再启用绝对lp/mm/DPI。线条只有4个频率组，达到最高测试频率只能标示图卡上限，不代表光学极限。",
+  "aliases": []
+}
