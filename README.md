@@ -173,7 +173,7 @@ Git 克隆不含两套授权图卡的派生资产；如需与便携版相同的�
 
 ### 验证与打包
 
-v0.7.2 的 **326 项自动测试**、冻结版 GUI / CLI 流程、HTML / PDF、模板加密及格式检查已通过。[Windows 构建记录](https://github.com/RayforLoy/MUTEX-Imatest/actions/workflows/build-release.yml) 保留构建与验收流程；其工作流为手动触发发布构建。另有 8 份固定版本的官方公开示例跑通记录，此验证不等于商业软件数值等价。实际 4.23 GB TIFF 的五通道回归在本地完成，私有输入不上传云端。
+v0.7.2 的 **327 项自动测试**、冻结版 GUI / CLI 流程、HTML / PDF、模板加密及格式检查已通过。[Windows 构建记录](https://github.com/RayforLoy/MUTEX-Imatest/actions/workflows/build-release.yml) 保留构建与验收流程；其工作流为手动触发发布构建。另有 8 份固定版本的官方公开示例跑通记录，此验证不等于商业软件数值等价。实际 4.23 GB TIFF 的五通道回归在本地完成，私有输入不上传云端。
 
 ```powershell
 .\.venv\Scripts\python.exe -m pytest --junitxml=validation/pytest.xml

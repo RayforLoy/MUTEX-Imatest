@@ -3,6 +3,7 @@ from dataclasses import dataclass, field, asdict
 from pathlib import Path
 import json, math
 import numpy as np
+from . import __version__
 
 SCHEMA_VERSION = 1
 RAW_EXTENSIONS = {".arw", ".srf", ".sr2", ".nef", ".nrw", ".raf", ".cr2", ".cr3", ".crw", ".dng", ".rw2", ".orf", ".pef", ".3fr", ".fff", ".iiq", ".rwl", ".mos", ".kdc"}
@@ -122,7 +123,7 @@ class AnalysisResult:
     focus_unit: str = "index"
     elapsed_seconds: float = 0.0
     warnings: list[str] = field(default_factory=list)
-    app_version: str = "0.7.1"
+    app_version: str = __version__
     schema_version: int = SCHEMA_VERSION
     optical_summary: dict = field(default_factory=dict)
     analysis_summary: dict = field(default_factory=dict)
@@ -132,6 +133,7 @@ class AnalysisResult:
     def from_dict(cls, data):
         data = dict(data)
         if data.get("schema_version", 1) != 1: raise ValueError("Unsupported result schema")
+        data.setdefault("app_version","unknown")
         data["image"] = ImageMetadata(**data["image"])
         data["measurements"] = [Measurement(**r) for r in data["measurements"]]
         return cls(**data)
