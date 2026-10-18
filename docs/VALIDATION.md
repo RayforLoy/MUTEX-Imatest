@@ -1,6 +1,14 @@
 # 验证记录
 
-2026-10-17 更新，开发主机 Windows 11 x64 / Python 3.12.9，32 GiB RAM。既有 RAW 与大图基准采集于 2026-10-11。
+2026-10-18 更新，开发主机 Windows 11 x64 / Python 3.12.9，32 GiB RAM。既有 RAW 与大图基准采集于 2026-10-11。
+
+## v0.7.1 发布验收
+
+本地及 [GitHub Windows 构建](https://github.com/RayforLoy/MUTEX-Imatest/actions/runs/39052119491) 均通过 315 项 pytest。冻结版 GUI 自检通过 9 张合成 48-bit TIFF、焦位序列、简易 / 专业模式、同步比较、HTML / PDF 及重渲染、加密模板与评价界面；冻结版 CLI 的 11 项流程、8 份固定版本官方公开示例及 TIFF / 视频格式检查通过。官方示例检查证明流程可运行，不代表商业软件黄金数值等价。
+
+最终发布包已下载、核对 SHA-256，并在本地重新解压运行 GUI 自检。空白用户配置可加载全部 9 套模板；两套授权图卡资产不含原 SVG / PDF。云端发布检查记录在便携目录的 `release-checks.json`；本地复验记录在 `validation/github-delivery-selftest/selftest.json`，README 界面截图取自本次合成自检。
+
+真实 RAW 的 7 份 CC0 样本验收在本地完成。云端构建核对相同 LibRaw DLL 哈希和解码器源码，未在云端重新下载并解码这些 RAW；设备、模式与限制仍以下方 RAW 表格为准。实际 V850 48-bit 输出、真实焦位序列与其他未验收硬件不因发布构建通过而视为通过。
 
 ## 自动与界面检查
 

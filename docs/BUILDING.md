@@ -34,6 +34,14 @@ GUI 自检使用合成 48-bit TIFF，检查后台进程、焦位分析、HTML/PD
 
 Windows ZIP 使用标准 DEFLATE 9 级压缩，兼容系统解压；已有 ZIP 直接存储。模板导出的 `.mxtpl` 仍使用快速压缩，其加密方式不受发布压缩设置影响。
 
+若已安装 7-Zip，可额外生成体积更小的 Windows 7z 包；原 ZIP 仍会保留：
+
+```powershell
+.venv\Scripts\python.exe scripts\release.py --zip --seven-zip 'C:\Program Files\7-Zip\7z.exe'
+```
+
+7z 和 ZIP 包含相同的便携目录。需要全部授权模板时，先完成文末的资产准备并加上 `--require-bundled`；脚本另生成单独模板 ZIP，记录各文件的大小与 SHA-256。
+
 ## 文件与发布边界
 
 Git 跟踪源码、测试、构建脚本、文档、许可证与可再分发的 `template/` 图卡。`.venv/`、`build/`、`dist/`、`example/`、`samples/`、`output/`、`validation/`、私有图卡和本机凭据均忽略。原始用户文件和个人结果仅保留本地。发布前确认待提交文件清单与许可证。
