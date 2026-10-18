@@ -1,6 +1,37 @@
+def apply_light_theme(app):
+    """Use one complete palette instead of mixing QSS with the Windows theme."""
+    from PySide6.QtCore import Qt
+    from PySide6.QtGui import QColor, QPalette
+    app.styleHints().setColorScheme(Qt.ColorScheme.Light)
+    app.setStyle("Fusion")
+    palette=QPalette()
+    colors={
+        "Window":"#f4f6fa", "WindowText":"#20394a", "Base":"#ffffff",
+        "AlternateBase":"#f3f7fa", "Text":"#20394a", "Button":"#ffffff",
+        "ButtonText":"#20394a", "BrightText":"#ffffff",
+        "ToolTipBase":"#173d4b", "ToolTipText":"#ffffff",
+        "Highlight":"#137b80", "HighlightedText":"#ffffff",
+        "Link":"#126b74", "LinkVisited":"#596c9b", "PlaceholderText":"#738795",
+        "Light":"#ffffff", "Midlight":"#e7edf2", "Mid":"#ccd9e1",
+        "Dark":"#738795", "Shadow":"#28485a", "Accent":"#137b80",
+    }
+    for name,color in colors.items():
+        palette.setColor(getattr(QPalette.ColorRole,name),QColor(color))
+    for name in ("WindowText","Text","ButtonText","PlaceholderText"):
+        palette.setColor(QPalette.ColorGroup.Disabled,getattr(QPalette.ColorRole,name),QColor("#83939f"))
+    palette.setColor(QPalette.ColorGroup.Disabled,QPalette.ColorRole.Highlight,QColor("#deedf1"))
+    palette.setColor(QPalette.ColorGroup.Disabled,QPalette.ColorRole.HighlightedText,QColor("#617684"))
+    app.setPalette(palette)
+
+
 STYLE = """
 QMainWindow, QDialog { background: #f4f6fa; }
 QWidget { color: #20394a; font-family: 'Microsoft YaHei UI', 'Segoe UI'; font-size: 12px; }
+QMenuBar, QMenu { background: #f4f6fa; color: #20394a; }
+QMenuBar::item:selected, QMenu::item:selected { background: #deedf1; color: #126b74; }
+QMenu::item:disabled { color: #83939f; }
+QComboBox QAbstractItemView { background: white; color: #20394a; selection-background-color: #deedf1; selection-color: #126b74; }
+QTableCornerButton::section { background: #f3f7fa; border: none; }
 QLabel#brand { font-size: 22px; font-weight: 700; color: #123c4a; }
 QLabel#subtitle { color: #738795; font-size: 11px; }
 QLabel#section { font-size: 13px; font-weight: 700; color: #28485a; }

@@ -74,6 +74,18 @@ def transform_box(box,H,width,height):
     lo=np.maximum(lo,0);hi=np.minimum(hi,[width,height])
     return (int(lo[0]),int(lo[1]),int(hi[0]-lo[0]),int(hi[1]-lo[1])),outside
 
+def usaf_native_axes(H,position,direction):
+    """Map template bar axes to native ROI axes without resampling pixels."""
+    point=cv2.perspectiveTransform(np.array([[position]],np.float64),np.linalg.inv(H))[0,0]
+    axis=0 if direction=="vertical" else 1
+    step=np.eye(2)*1e-5
+    projected=cv2.perspectiveTransform(np.array([[point,point+step[axis],point+step[1-axis]]],np.float64),H)[0]
+    normal=projected[1]-projected[0]
+    native_axis=int(abs(normal[1])>abs(normal[0]))
+    reverse_length=bool((projected[2]-projected[0])[1-native_axis]<0)
+    return ("horizontal" if native_axis else "vertical"),reverse_length
+
+
 def local_scale(chart,H,position,normal):
     if not chart.calibrated or not chart.physical_size_mm: return None
     inv=np.linalg.inv(H)

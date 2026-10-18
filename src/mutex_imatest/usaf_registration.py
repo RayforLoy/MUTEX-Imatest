@@ -69,13 +69,13 @@ def _project(points,H):
     return cv2.perspectiveTransform(np.asarray(points,np.float64)[None],H)[0]
 
 
-def _global(chart,source,preview):
+def _global_oriented(chart,source,preview,quarter_turns):
     from .utils import atomic_json
     def diagnostic(**values):
         debug.update(values)
         atomic_json(config_path,debug)
-    config_path=source.config.cache_path()/f"usaf-registration-{source.fingerprint[:12]}.json"
-    debug={}
+    config_path=source.config.cache_path()/f"usaf-registration-{source.fingerprint[:12]}-q{quarter_turns}.json"
+    debug={"preview_quarter_turns":quarter_turns}
     anchors=np.array([f["position"] for f in chart.fiducials if f.get("kind")=="usaf" and f["k"]==0 and f["direction"]=="vertical"])
     if len(anchors)<6:raise ValueError("USAF 配准需要至少 6 个重复单元；可使用四点配准")
     count=len(np.unique(np.round(anchors[:,0],3)))
@@ -97,8 +97,9 @@ def _global(chart,source,preview):
     slopes=[np.polyfit(c[:,1],c[:,0],1)[0] for c in columns if len(c)>=3]
     shear=float(np.median(slopes)) if slopes else 0
     x_centers=np.array([np.median(c[:,0]-shear*c[:,1]) for c in columns])
-    target_step=np.median([d for c in columns for d in np.diff(np.sort(c[:,1])) if d>5*p0])
-    if not np.isfinite(target_step):raise ValueError("USAF 行间距无法可靠估计")
+    row_gaps=[d for c in columns for d in np.diff(np.sort(c[:,1])) if d>5*p0]
+    if not row_gaps:raise ValueError("USAF 行覆盖不足，无法可靠估计行间距")
+    target_step=float(np.median(row_gaps))
     diagnostic(source_anchors=anchors.tolist(),image_coarse_points=points.tolist(),period=p0,
                detected_periods=sorted(periods.tolist(),reverse=True),columns=[c.tolist() for c in columns],
                shear=shear,x_centers=x_centers.tolist(),target_step=float(target_step))
@@ -163,9 +164,40 @@ def _global(chart,source,preview):
     diagnostic(ink_scores=[{"correlation":a,"matched":b,"residual":c,"H":d.tolist()} for a,b,c,d in scored])
     correlation,matched,residual,H=scored[0]
     if correlation<.12:raise ValueError("USAF 标尺/文字配准置信度不足，请使用四点配准")
-    native=np.diag([source.metadata.width/preview.shape[1],source.metadata.height/preview.shape[0],1])@H
-    return native,{"coarse_matches":matched,"preview_rms_proxy_px":residual,"reference_ink_correlation":correlation,
+    return H,{"coarse_matches":matched,"preview_rms_proxy_px":residual,"reference_ink_correlation":correlation,
                    "runner_up_correlation":scored[1][0] if len(scored)>1 else None,"coarse_period_preview_px":p0}
+
+
+def _global(chart,source,preview):
+    # The four reflection hypotheses already cover 180-degree turns. Trying
+    # both axis orders covers all eight right-angle/mirror orientations.
+    # Only the localization preview is rotated; native measurement pixels stay
+    # in source coordinates.
+    from .utils import atomic_json
+    h,w=preview.shape
+    attempts=[];solutions=[]
+    scale=np.diag([source.metadata.width/w,source.metadata.height/h,1])
+    for turns in (0,1):
+        check_cancel(getattr(source,"cancel",None))
+        rotation=np.eye(3) if turns==0 else np.array([[0,1,0],[-1,0,w-1],[0,0,1]],float)
+        try:
+            oriented,status=_global_oriented(chart,source,np.rot90(preview,turns),turns)
+        except ValueError as exc:
+            attempts.append({"preview_quarter_turns":turns,"error":str(exc)})
+            continue
+        native=scale@np.linalg.inv(rotation)@oriented
+        status["preview_quarter_turns"]=turns
+        attempts.append(dict(status))
+        solutions.append((status["reference_ink_correlation"],native,status))
+    path=source.config.cache_path()/f"usaf-registration-{source.fingerprint[:12]}.json"
+    atomic_json(path,{"orientation_attempts":attempts})
+    if not solutions:
+        reason="；".join(f'{a["preview_quarter_turns"]*90}°: {a["error"]}' for a in attempts)
+        raise ValueError("USAF 自动定位未通过（已检查横向、纵向及镜像）。"+reason+"；请核对模板或使用四点配准。")
+    _,native,status=max(solutions,key=lambda item:item[0])
+    status["orientation_attempts"]=attempts
+    atomic_json(path,dict(status,homography=native.tolist()))
+    return native,status
 
 
 def register_usaf(chart,source,config):
@@ -193,8 +225,10 @@ def register_usaf(chart,source,config):
             source_point=np.array(f["position"])
             delta=np.array([f["period_normalized"][0],0]) if direction==0 else np.array([0,f["period_normalized"][1]])
             projected=_project([source_point,source_point+delta],H)
-            period=float(np.linalg.norm(projected[1]-projected[0]))
-            candidates=[d for d in detected if d["direction"]==direction and abs(d["period"]/period-1)<.12
+            normal=projected[1]-projected[0]
+            period=float(np.linalg.norm(normal))
+            native_direction=int(abs(normal[1])>abs(normal[0]))
+            candidates=[d for d in detected if d["direction"]==native_direction and abs(d["period"]/period-1)<.12
                         and np.linalg.norm(d["center"]+lo-prediction)<max(35,.75*p0)]
             if candidates:
                 chosen=min(candidates,key=lambda d:np.linalg.norm(d["center"]+lo-prediction))

@@ -6,14 +6,14 @@ import numpy as np
 from ..models import Measurement, AnalysisResult, ChartDefinition
 from ..config import AnalysisConfig
 from ..imaging import ImageSource
-from ..detection import register_chart,transform_box,local_scale
+from ..detection import register_chart,transform_box,local_scale,usaf_native_axes
 from ..utils import check_cancel,focus_from_name
 from .preprocess import linearize,channel_image,clipping_fraction
 from .sfr import slanted_edge
 from .targets import usaf,star
 from .extra import flat_field,step_patch,color_patch,point_spread,texture,grid_geometry
 
-ALGORITHM_VERSION="mutex-native-2026.10.17"
+ALGORITHM_VERSION="mutex-native-2026.10.18"
 def analyze(path,chart,config=None,cancel=None,progress=None,focus_position=None,focus_unit=None):
     config=(config or AnalysisConfig()).validate()
     progress=progress or (lambda *a:None)
@@ -123,9 +123,12 @@ def analyze_source(source,chart,config,cancel=None,progress=None,focus_position=
                     from .quality import edge_information
                     edge_information(result,channel_data,region.params)
                 elif region.kind=="usaf":
-                    normal=np.array([1.,0.]) if region.params.get("direction","vertical")=="vertical" else np.array([0.,1.])
+                    direction=region.params.get("direction","vertical")
+                    native_direction,_=usaf_native_axes(region_H,position,direction)
+                    normal=np.array([1.,0.]) if native_direction=="vertical" else np.array([0.,1.])
                     scale=local_scale(chart,region_H,position,normal)
-                    result=usaf(channel_data,region.params,config,scale)
+                    result=usaf(channel_data,dict(region.params,direction=native_direction),config,scale)
+                    result["direction_deg"]=0 if direction=="vertical" else 90
                 elif region.kind in {"star","wedge"}:
                     rx,ry,rw,rh=region.box
                     target_params=dict(region.params)

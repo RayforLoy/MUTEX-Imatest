@@ -11,7 +11,8 @@ def run(out,headless=True):
     from .reports import export_bundle
     from .cli import environment_info
     folder=Path(out).resolve();folder.mkdir(parents=True,exist_ok=True)
-    app=QApplication.instance() or QApplication([]);app.setStyle("Fusion")
+    from .ui.style import apply_light_theme
+    app=QApplication.instance() or QApplication([]);apply_light_theme(app)
     window=MainWindow();window.resize(1580,1020);window.persist_preferences=False
     window.config=AnalysisConfig(transfer="linear",channels="RGB",cache_dir=str(folder/"cache"))
     window.restore_settings();window.show()

@@ -10,14 +10,14 @@ import cv2
 import numpy as np
 from scipy.signal import find_peaks
 from ..models import Measurement
-from ..detection import transform_box,local_scale
+from ..detection import transform_box,local_scale,usaf_native_axes
 from ..resolution import frequency_values
 from ..utils import check_cancel
 from .preprocess import linearize,clipping_fraction
 from .rgb_registration import estimate_translation,align_gray
 from .targets import usaf_frequency
 
-VERSION="mutex-usaf-multifrequency-2026.10.16-v1"
+VERSION="mutex-usaf-multifrequency-2026.10.18-v2"
 
 
 def is_multifrequency(chart):
@@ -167,7 +167,8 @@ def analyze_whole_chart(source,chart,config,H,registration,cancel=None,progress=
             check_cancel(cancel)
             direction=region.params.get("direction","vertical");angle=0 if direction=="vertical" else 90
             box,outside=boxes[region.id];x,y,w,h=box;position=(x+w/2,y+h/2)
-            normal=np.array([1.,0.]) if angle==0 else np.array([0.,1.])
+            native_direction,reverse_length=usaf_native_axes(local_H,position,direction)
+            normal=np.array([1.,0.]) if native_direction=="vertical" else np.array([0.,1.])
             scale=local_scale(chart,local_H,position,normal)
             lpmm=usaf_frequency(region.params["group"],region.params["element"])
             # Nominal target geometry supplies cy/px even before physical size
@@ -193,11 +194,10 @@ def analyze_whole_chart(source,chart,config,H,registration,cancel=None,progress=
                     else:
                         plane=before if ch=="Y" else after if ch=="Y_align" else data[...,{"R":0,"G":1,"B":2}[ch]]
                         roi=plane[yy:yy+h,xx:xx+w]
-                        if angle==90:roi=roi.T
+                        if native_direction=="horizontal":roi=roi.T
                         try:
                             band=region.params.get('profile_band')
-                            along_axis=1 if angle==0 else 0
-                            if band and local_H[along_axis,along_axis]<0:band=[1-band[1],1-band[0]]
+                            if band and reverse_length:band=[1-band[1],1-band[0]]
                             measured,quality,confidence,curve=measure_bars(roi,frequency,config.minimum_contrast,band)
                             values.update(measured);flags.extend(quality)
                             values["resolved"]=float(values.get("ctf",0)>=config.ctf_threshold and values.get("detected_bar_count")==3)

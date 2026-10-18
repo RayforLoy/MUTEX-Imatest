@@ -10,7 +10,8 @@ def run(paths=None,demo=False):
     QApplication.setOrganizationName("MUTEX")
     QApplication.setApplicationName("MUTEX Imatest")
     app=QApplication.instance() or QApplication(sys.argv[:1])
-    app.setStyle("Fusion")
+    from .ui.style import apply_light_theme
+    apply_light_theme(app)
     window=MainWindow()
     icon=Path(__file__).parent/"assets"/"app.ico"
     if icon.exists():window.setWindowIcon(QIcon(str(icon)))

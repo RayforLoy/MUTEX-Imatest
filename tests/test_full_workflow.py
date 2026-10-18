@@ -52,6 +52,36 @@ def test_native_whole_chart_recovers_channels_shifts_and_units(whole_truth):
     assert np.array_equal(tifffile.imread(result.image.path),rgb)
 
 
+@pytest.mark.parametrize("turns",[1,2,3])
+def test_rotated_whole_card_keeps_native_ctf_bands_and_rgb_shift_truth(whole_truth,tmp_path,turns):
+    from mutex_imatest.models import ChartDefinition
+    root,original,rgb,preview=whole_truth
+    image=np.rot90(rgb,turns).copy()
+    path=tmp_path/'rotated.tif'
+    tifffile.imwrite(path,image,photometric='rgb',metadata=None)
+    config=AnalysisConfig.from_dict(original.settings)
+    config.cache_dir=str(tmp_path/'cache')
+    result=analyze(path,ChartDefinition.from_dict(original.template),config)
+    combined=view_result(result,'resolution_limit').measurements
+    assert len(combined)==45 and all(m.metric('resolution_limit') is not None for m in combined)
+    rotation=np.array([[0,1],[-1,0]]) if turns==1 else -np.eye(2) if turns==2 else np.array([[0,-1],[1,0]])
+    for unit in result.optical_summary['units']:
+        for ch,offset in [('R',[.4,.55]),('B',[-.6,-.35])]:
+            expected=rotation@offset
+            shift=unit['rgb_shifts'][ch]
+            assert shift['valid']
+            assert shift['dx_px']==pytest.approx(expected[0],abs=.1)
+            assert shift['dy_px']==pytest.approx(expected[1],abs=.1)
+    # The noncentral clean band must follow both the mirror and the quarter
+    # turn. Measuring the wrong axis/band loses the three separate dark bars.
+    rows=[m for m in result.measurements if m.region_id=='svg-usaf-001-vertical-g0e6']
+    assert len(rows)==5 and all(m.values['detected_bar_count']==3 for m in rows)
+    baseline={(m.region_id,m.channel):m.metric('resolution_limit') for m in view_result(original,'resolution_limit').measurements}
+    for m in combined:
+        assert m.metric('resolution_limit')==pytest.approx(baseline[m.region_id,m.channel],rel=.13)
+    assert np.array_equal(tifffile.imread(path),image)
+
+
 def test_whole_reports_are_compact_and_preserve_complete_curves(whole_truth,tmp_path):
     from mutex_imatest.reports_usaf import export_html,export_pdf,export_tables
     from PySide6.QtPdf import QPdfDocument

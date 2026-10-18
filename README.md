@@ -32,14 +32,16 @@
 
 ## 下载与运行
 
-前往 [GitHub Releases](https://github.com/RayforLoy/MUTEX-Imatest/releases/latest) 获取便携版。当前发布版本为 **v0.7.1**，验证环境为 **Windows 11 x64**。
+前往 [GitHub Releases](https://github.com/RayforLoy/MUTEX-Imatest/releases/latest) 获取便携版。当前发布版本为 **v0.7.2**，验证环境为 **Windows 11 x64**。
 
-| 文件 | 体积 | 用途 |
-| --- | ---: | --- |
-| [Windows x64 · 7z](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.7.1/MUTEX-Imatest-0.7.1-windows-x64.7z) | 102.3 MiB | 体积更小，使用兼容 7z 的工具解压 |
-| [Windows x64 · ZIP](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.7.1/MUTEX-Imatest-0.7.1-windows-x64.zip) | 169.4 MiB | 可使用 Windows 自带功能解压 |
-| [完整模板包](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.7.1/MUTEX-Imatest-0.7.1-templates.zip) | 6.7 MiB | 单独获取全部 9 套模板；便携版已包含 |
-| [完整源码包](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.7.1/MUTEX-Imatest-0.7.1-source.zip) | 11.0 MiB | 源码、全部模板资产及对应 LibRaw 原始发行包 |
+v0.7.2 修复 Windows 深色主题下的菜单 / 面板混色，以及横向 USAF 图卡的配准、条纹方向和原像素取样；完整发布包继续包含全部模板。
+
+| 文件 | 用途 |
+| --- | --- |
+| [Windows x64 · 7z](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.7.2/MUTEX-Imatest-0.7.2-windows-x64.7z) | 体积更小，使用兼容 7z 的工具解压 |
+| [Windows x64 · ZIP](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.7.2/MUTEX-Imatest-0.7.2-windows-x64.zip) | 可使用 Windows 自带功能解压 |
+| [完整模板包](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.7.2/MUTEX-Imatest-0.7.2-templates.zip) | 单独获取全部 9 套模板；便携版已包含 |
+| [完整源码包](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.7.2/MUTEX-Imatest-0.7.2-source.zip) | 源码、全部模板资产及对应 LibRaw 原始发行包 |
 
 1. 下载任一 **Windows x64** 包，完整解压到可写目录。
 2. 双击目录中的 **`MUTEX Imatest.exe`**。无需另行安装 Python。
@@ -47,7 +49,7 @@
 
 两个 Windows 包的内容一致，均包含 GUI、`MUTEX-CLI.exe`、全部模板、文档及许可证。请保留 `_internal` 和其余文件，直接运行解压目录中的程序；`build/` 是开发时的中间产物目录。
 
-校验文件见 [SHA256SUMS.txt](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.7.1/SHA256SUMS.txt)，大小与哈希清单见 [release-manifest.json](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.7.1/release-manifest.json)。PowerShell 可用 `Get-FileHash .\下载文件名 -Algorithm SHA256` 核对。
+校验文件见 [SHA256SUMS.txt](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.7.2/SHA256SUMS.txt)，大小与哈希清单见 [release-manifest.json](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.7.2/release-manifest.json)。PowerShell 可用 `Get-FileHash .\下载文件名 -Algorithm SHA256` 核对。
 
 ## 快速开始
 
@@ -171,7 +173,7 @@ Git 克隆不含两套授权图卡的派生资产；如需与便携版相同的�
 
 ### 验证与打包
 
-v0.7.1 的 **315 项自动测试**、冻结版 GUI / CLI 流程、HTML / PDF、模板加密及格式检查已通过。[Windows 构建记录](https://github.com/RayforLoy/MUTEX-Imatest/actions/runs/39052119491) 保留构建与验收流程；其工作流为手动触发发布构建。另有 8 份固定版本的官方公开示例跑通记录，此验证不等于商业软件数值等价。
+v0.7.2 的 **326 项自动测试**、冻结版 GUI / CLI 流程、HTML / PDF、模板加密及格式检查已通过。[Windows 构建记录](https://github.com/RayforLoy/MUTEX-Imatest/actions/workflows/build-release.yml) 保留构建与验收流程；其工作流为手动触发发布构建。另有 8 份固定版本的官方公开示例跑通记录，此验证不等于商业软件数值等价。实际 4.23 GB TIFF 的五通道回归在本地完成，私有输入不上传云端。
 
 ```powershell
 .\.venv\Scripts\python.exe -m pytest --junitxml=validation/pytest.xml

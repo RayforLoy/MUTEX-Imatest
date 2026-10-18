@@ -29,7 +29,8 @@ def make_vector(path):
 
 
 @pytest.mark.parametrize("mirror",[False,True])
-def test_native_vector_registration_handles_mirror_and_shear(tmp_path,qapp,mirror):
+@pytest.mark.parametrize("turns",[0,1,2,3])
+def test_native_vector_registration_handles_mirror_and_shear(tmp_path,qapp,mirror,turns):
     svg=tmp_path/'chart.svg';make_vector(svg)
     chart=import_source(svg)
     chart.regions,chart.fiducials,chart.physical_size_mm=detect_svg_usaf(svg,group=1,element=3)
@@ -41,6 +42,12 @@ def test_native_vector_registration_handles_mirror_and_shear(tmp_path,qapp,mirro
     h,w=pixels.shape[:2]
     M=np.array([[1,.007,8],[0,-1 if mirror else 1,h-1 if mirror else 0],[0,0,1]],float)
     scanned=cv2.warpPerspective(pixels,M,(w+25,h),borderValue=(225,225,225))
+    sh,sw=scanned.shape[:2]
+    rotations=[np.eye(3),np.array([[0,1,0],[-1,0,sw-1],[0,0,1]]),
+               np.array([[-1,0,sw-1],[0,-1,sh-1],[0,0,1]]),
+               np.array([[0,-1,sh-1],[1,0,0],[0,0,1]])]
+    scanned=np.rot90(scanned,turns).copy()
+    M=rotations[turns]@M
     target=tmp_path/'scan.tif';tifffile.imwrite(target,scanned,photometric='rgb',metadata=None)
     before=target.read_bytes()
     config=AnalysisConfig(transfer='linear',channels='RGB',registration='usaf',reject_clipping=False,cache_dir=str(tmp_path/'cache'))
