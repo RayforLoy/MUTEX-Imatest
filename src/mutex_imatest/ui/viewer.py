@@ -153,23 +153,26 @@ class ImageViewer(QGraphicsView):
             pixmap=QPixmap.fromImage(qimage(data["rgba"]))
             self.overlay_item=self.scene().addPixmap(pixmap);self.overlay_item.setZValue(5)
             self.overlay_item.setTransform(QTransform.fromScale(self.metadata.width/pixmap.width(),self.metadata.height/pixmap.height()))
-        for m in self.result.measurements:
-            if m.channel!=self.channel:continue
-            x,y,w,h=m.box_pixels
-            color=QColor("#12847f" if m.valid else "#ce8961")
+        for region in data['regions']:
+            x,y,w,h=region['box']
+            if min(w,h)<=0:continue
+            usable=region['usable'];position=region['position'];value=region['value']
+            color=QColor('#12847f' if usable else '#8b959e' if region['valid'] else '#b3825b')
             pen=QPen(color,1.1);pen.setCosmetic(True)
-            box=self.scene().addRect(x,y,w,h,pen);box.setZValue(7);box.setData(0,m.region_id);self.annotations.append(box)
+            if not usable:pen.setStyle(Qt.PenStyle.DashLine)
+            info=f"{region['label']} · {self.channel}\n"+(f'{value:.5g} {self.unit}' if usable else region['reason'])
+            if region['flags']:info+='\n'+', '.join(region['flags'])
+            box=self.scene().addRect(x,y,w,h,pen);box.setZValue(7);box.setData(0,region['id']);box.setToolTip(info);self.annotations.append(box)
+            if not (0<=position[0]<=self.metadata.width and 0<=position[1]<=self.metadata.height):continue
             radius=2.5 if self.zoom_scale()<.06 else 4
-            point=self.scene().addEllipse(-radius,-radius,radius*2,radius*2,QPen(QColor("#214351"),1),QBrush(QColor("white")))
-            point.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIgnoresTransformations);point.setPos(*m.position);point.setZValue(9);point.setData(0,m.region_id)
-            value=m.metric(data['metric'])
-            point.setToolTip(f"{m.label} · {m.channel}\n{value:.5g} {self.unit}\n{', '.join(m.flags) or '有效'}" if value is not None else f"{m.label}\n{', '.join(m.flags) or '无有效数据'}")
+            point=self.scene().addEllipse(-radius,-radius,radius*2,radius*2,QPen(color,1),QBrush(QColor('white' if usable else '#d9dfe3')))
+            point.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIgnoresTransformations);point.setPos(*position);point.setZValue(9);point.setData(0,region['id'])
+            point.setToolTip(info)
             self.annotations.append(point)
-            if self.zoom_scale()<.06 and len(data['points'])>12:continue
-            value=m.metric(data["metric"])
-            label=self.scene().addSimpleText(f"{value:.3f}" if value is not None and m.valid else "—" if m.valid else "×")
+            if self.zoom_scale()<.06 and (not usable or len(data['points'])>12):continue
+            label=self.scene().addSimpleText(f'{value:.3f}' if usable else '—' if region['valid'] else '×')
             label.setBrush(QBrush(QColor("#103d4a")));label.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIgnoresTransformations)
-            label.setPos(m.position[0]+8,m.position[1]-18);label.setZValue(9);label.setData(0,m.region_id)
+            label.setPos(position[0]+8,position[1]-18);label.setZValue(9);label.setData(0,region['id'])
             self.annotations.append(label)
         return data
     def begin_anchors(self):

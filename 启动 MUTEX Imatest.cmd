@@ -2,8 +2,8 @@
 cd /d "%~dp0"
 if exist "MUTEX Imatest.exe" (
   start "" "MUTEX Imatest.exe"
-) else if exist "dist\MUTEX Imatest 0.7.2\MUTEX Imatest.exe" (
-  start "" "dist\MUTEX Imatest 0.7.2\MUTEX Imatest.exe"
+) else if exist "dist\MUTEX Imatest 0.7.3\MUTEX Imatest.exe" (
+  start "" "dist\MUTEX Imatest 0.7.3\MUTEX Imatest.exe"
 ) else if exist "dist\MUTEX Imatest\MUTEX Imatest.exe" (
   start "" "dist\MUTEX Imatest\MUTEX Imatest.exe"
 ) else if exist ".venv\Scripts\pythonw.exe" (

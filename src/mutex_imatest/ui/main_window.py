@@ -155,6 +155,13 @@ class MainWindow(QMainWindow):
         self.quick_orientation.setToolTip('根据模板配准恢复方向，限 90° 步进及必要镜像，再适合窗口')
         self.orientation_label=label('0°','subtitle');self.orientation_label.setToolTip('只改变预览；位置与 RGB 位移仍以原图坐标为准')
         orientation_row.addWidget(self.orientation_label);orientation_row.addStretch();center.addLayout(orientation_row)
+        coverage_row=QHBoxLayout()
+        self.coverage_notice=label('','subtitle');self.coverage_notice.setWordWrap(True)
+        self.coverage_notice.setStyleSheet('background: #fff6e4; color: #77500f; border-left: 3px solid #c99b3b; padding: 6px;')
+        self.coverage_notice.hide();coverage_row.addWidget(self.coverage_notice,1)
+        self.resolution_map_button=button('查看已确认分辨率热力图',lambda:self.metric_selector.setCurrentIndex(self.metric_selector.findData('resolution_limit')))
+        self.resolution_map_button.setToolTip('保留当前分析结果，切换到有明确三条纹判定的分辨率地图；不填补缺失的 CTF 交点。')
+        self.resolution_map_button.hide();coverage_row.addWidget(self.resolution_map_button);center.addLayout(coverage_row)
         frequency_row=QHBoxLayout();frequency_row.addWidget(label('单频 CTF 频率'))
         self.usaf_frequency=QComboBox();self.usaf_frequency.setMinimumWidth(210);self.usaf_frequency.currentIndexChanged.connect(self.update_visuals);frequency_row.addWidget(self.usaf_frequency)
         self.gray_note=label('Y：对齐前灰度　Y_align：对齐后灰度；G 为位移参考','subtitle');frequency_row.addWidget(self.gray_note);frequency_row.addStretch();center.addLayout(frequency_row)
@@ -700,7 +707,8 @@ class MainWindow(QMainWindow):
         entry=self.entries[self.current_index]
         if entry['result']:self.sync_metric_choices(result=entry['result'])
         result=self.direction_result(entry["result"])
-        if not result:return
+        if not result:
+            self.coverage_notice.hide();self.resolution_map_button.hide();return
         if self.metric_selector.currentData() in {'best_focus','focus_offset'} and self.focus_data:
             result=self.focus_overlay_result(entry['result'],self.metric_selector.currentData())
         metric=self.metric_selector.currentData()
@@ -735,12 +743,16 @@ class MainWindow(QMainWindow):
             self.reference_viewer.set_result(compare_result,metric,channel,unit,self.alpha.value()/100,self.interpolation.isChecked())
             self.reference_viewer.refresh_overlay(self.overlay.isChecked(),limits)
         values=data["values"] if data else []
+        notice=data.get('notice','') if data else ''
+        self.coverage_notice.setText(notice);self.coverage_notice.setVisible(bool(notice))
+        self.resolution_map_button.setVisible(bool(notice and metric in {'ctf50','ctf20','ctf10'} and entry['result'].optical_summary and
+            any(m.valid and m.channel==channel and m.metric('resolution_limit') is not None for m in entry['result'].measurements if m.kind=='usaf_summary' and m.direction_deg is None)))
         self.summary_value.setText(f"{np.mean(values):.3f}" if len(values) else "—")
         metric_name=self.metric_selector.currentText()
         self.summary_label.setText(f"平均 {metric_name} · {unit}\n有效测点 {len(values)}")
         self.update_evaluation(result,metric,channel)
-        coverage_note='区域间插值 · 外缘至区域边界' if self.interpolation.isChecked() else '各测试区域内填色'
-        self.legend.setText(f"蓝 → 绿 → 黄 → 红   {data['limits'][0]:.3g} — {data['limits'][1]:.3g} {unit}    · 白点：实测位置 · {coverage_note}" if data and len(values) else "该指标没有有效数据；检查图案、通道和物理标定")
+        coverage_note='仅相邻有效区域间插值 · 外缘至区域边界' if self.interpolation.isChecked() else '各测试区域内填色'
+        self.legend.setText(f"蓝 → 绿 → 黄 → 红   {data['limits'][0]:.3g} — {data['limits'][1]:.3g} {unit}    · 白点：实测 · 灰色斜线：未测得 · {coverage_note}" if data and len(values) else "该指标没有有效数值；灰色斜线标记未测得区域，不代表零分辨率。")
         self.reg_note.setText(result.registration.get("warning",""))
         selected=[m for m in result.measurements if m.channel==channel]
         clipped=sum("clipped" in m.flags for m in selected)

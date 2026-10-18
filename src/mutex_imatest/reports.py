@@ -99,7 +99,7 @@ main{{max-width:1120px;margin:32px auto;padding:36px;background:white;border-rad
 <h1>{esc(report_title)}</h1><div class="sub">{esc(Path(result.image.path).name)} · {esc(result.chart_name)} · v{esc(result.app_version)}</div>
 <div class="cards"><div class="card">原图尺寸<strong>{result.image.width} × {result.image.height}</strong></div><div class="card">有效测量<strong>{valid} / {len(result.measurements)}</strong></div><div class="card">位深 / 解码<strong>{result.image.bits_per_sample}-bit / {esc(result.image.dtype)}</strong></div><div class="card">焦位<strong>{esc(focus)}</strong></div></div>
 <p>设备：{esc(result.image.camera or '未记录')}；解码器：{esc(result.image.decoder)}；图卡 ID：{esc(result.chart_id)}。<br>所选指标：{esc(actual)} / {esc(channel)} / {esc(display_unit or '无量纲')}；显示测点 {len(data['values'])} 个。</p>
-<h2>热力图</h2><figure><img src="data:image/png;base64,{encoded}" alt="原图预览与测量热力图"><figcaption>图例范围 {data['low']:.6g} - {data['high']:.6g} {esc(display_unit)}。白点为实测位置；{coverage_note}，区域外和明显大空洞透明。颜色为显示估计，不增加实测点。没有有效测点时不会生成有意义的色彩覆盖。</figcaption></figure>
+<h2>热力图</h2><figure><img src="data:image/png;base64,{encoded}" alt="原图预览与测量热力图"><figcaption>图例范围 {data['low']:.6g} - {data['high']:.6g} {esc(display_unit)}。白点为实测位置；灰色斜线为当前指标未测得，不代表零；{coverage_note}，不跨缺失测点连接，区域外透明。颜色为显示估计，不增加实测点。没有有效测点时不会生成有意义的色彩覆盖。</figcaption></figure>
 <h2>质量提示</h2><div class="warning"><ul>{warnings_html}</ul><p>CTF 是条纹对比度响应，不能直接当作 MTF。输入曲线、剪切、配准和物理尺寸影响测量；单张图像不能独立确认机械歪轴。</p></div>
 {evaluation_section}
 {native_curves}
@@ -137,8 +137,10 @@ def export_overlay(result,preview,path,metric="mtf50",channel="G",unit="cy/px",a
         draw.text((x+8,y-18),f"{value:.3g}",fill="#102a43",font=font,stroke_width=1,stroke_fill="white")
     low,high=data['limits']
     label=f"{metric} · {channel} · {_report_unit(result,metric,unit)}  {low:.3g} - {high:.3g}"
-    draw.rectangle((0,0,image.width,32),fill=(255,255,255,230))
+    draw.rectangle((0,0,image.width,60 if data['missing_count'] else 32),fill=(255,255,255,230))
     draw.text((10,4),label,fill="#102a43",font=font)
+    if data['missing_count']:
+        draw.text((10,32),f"有效测点 {len(data['values'])}/{len(data['regions'])}；灰色斜线：当前指标未测得；仅相邻有效区域间插值",fill='#596a76',font=font)
     image.convert("RGB").save(path)
     return data
 

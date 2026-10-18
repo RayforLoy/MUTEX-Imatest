@@ -147,3 +147,59 @@ def test_raw_and_filtered_whole_card_views_have_identical_boundaries():
     filtered=heatmap_data(view_result(r,'resolution_limit'),'resolution_limit',width=101,height=101)
     np.testing.assert_array_equal(raw['boxes'],filtered['boxes'])
     np.testing.assert_allclose(raw['field'],filtered['field'],equal_nan=True)
+
+
+def test_two_remote_threshold_crossings_do_not_form_a_diagonal_band():
+    points=[(x,y) for y in [20,40,60,80] for x in [20,40,60,80]]
+    r=result([sample(str(i),p,(p[0]-5,p[1]-5,10,10),.1+i*.01 if p in [(20,80),(80,20)] else None)
+              for i,p in enumerate(points)])
+    before=copy.deepcopy(r.to_dict());d=heatmap_rgba(r,'mtf50',width=101,height=101)
+    assert len(d['values'])==2 and d['missing_count']==14
+    assert np.isnan(d['field'][40:61,40:61]).all()
+    assert np.isfinite(d['field'][15:26,75:86]).all()
+    assert np.isfinite(d['field'][75:86,15:26]).all()
+    assert d['rgba'][40,40,3]>0  # gray no-data hatch, with no numerical value
+    assert np.ptp(d['rgba'][40,40,:3])<25 and d['rgba'][0,0,3]==0
+    assert '2/16' in d['notice'] and r.to_dict()==before
+
+
+def test_missing_collinear_site_blocks_interpolation_between_survivors():
+    r=result([sample('left',(25,50),(20,45,10,10),.1),
+              sample('missing',(50,50),(45,45,10,10),None),
+              sample('right',(75,50),(70,45,10,10),.3)])
+    d=heatmap_data(r,'mtf50',width=101,height=101)
+    assert np.isnan(d['field'][50,35:66]).all()
+    assert d['field'][50,25]==.1 and d['field'][50,75]==.3
+
+
+def test_neighboring_samples_still_join_beside_missing_regions():
+    r=result([sample(str(i),(x,50),(x-5,45,10,10),v)
+              for i,(x,v) in enumerate([(20,.1),(40,.3),(60,None),(80,None)])])
+    d=heatmap_data(r,'mtf50',width=101,height=101)
+    assert d['field'][50,30]==pytest.approx(.2)
+    assert np.isnan(d['field'][50,50:86]).all()
+
+
+def test_small_remote_rois_do_not_define_their_own_large_neighbor_spacing():
+    r=result([sample('a',(20,80),(15,75,10,10),.1),sample('b',(80,20),(75,15,10,10),.3)])
+    d=heatmap_data(r,'mtf50',width=101,height=101)
+    assert np.isnan(d['field'][50,50])
+
+
+def test_missing_interior_site_stays_a_hole_in_a_dense_map():
+    points=[(x,y) for y in [20,50,80] for x in [20,50,80]]
+    r=result([sample(str(i),p,(p[0]-5,p[1]-5,10,10),None if p==(50,50) else .2)
+              for i,p in enumerate(points)])
+    d=heatmap_data(r,'mtf50',width=101,height=101)
+    assert np.isnan(d['field'][45:56,45:56]).all()
+    assert d['field'][20,35]==pytest.approx(.2)
+
+
+def test_export_marks_no_data_without_making_it_a_measured_value(tmp_path):
+    from mutex_imatest.reports import export_overlay
+    r=result([sample('a',(25,70),(20,65,10,10),.1),sample('missing',(70,70),(60,60,20,20),None)])
+    preview=tmp_path/'preview.png';Image.new('RGB',(101,101),'white').save(preview)
+    d=export_overlay(r,preview,tmp_path/'heatmap.png')
+    assert d['missing_count']==1 and np.isnan(d['field'][70,70])
+    pixels=np.asarray(Image.open(tmp_path/'heatmap.png'))
+    assert not np.all(pixels[70,70]==255) and np.all(pixels[90,90]==255)

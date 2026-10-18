@@ -56,7 +56,7 @@ def _html(result,summary,images,path,unit='cy/px'):
                 encoded=base64.b64encode(image.read_bytes()).decode('ascii')
                 maps.append(f'<figure><figcaption>{esc(ch["channel"])} · {esc(ch["unit"])} · {ch["valid"]} 个有效测点</figcaption><img src="data:image/png;base64,{encoded}" alt="{esc(rec["name"])} {esc(ch["channel"])}"></figure>')
         if not maps:continue
-        reasons=rec['reason'] or '蓝 → 绿 → 黄 → 红；同一分析的通道共用色标。白点实测，颜色延伸至测试区域边界；区域外透明。'
+        reasons=rec['reason'] or '蓝 → 绿 → 黄 → 红；同一分析的通道共用色标。白点实测，灰色斜线为未测得；仅相邻有效区域间插值，颜色延伸至区域边界。'
         flags='；'.join(ch['channel']+': '+', '.join(f'{k}={v}' for k,v in ch['flags'].items()) for ch in rec['channels'] if ch['flags'])
         sections.append(f'<section id="{esc(rec["metric"])}"><h2>{esc(rec["name"])}</h2><p>{esc(reasons)}</p><div class="maps">{"".join(maps)}</div><details><summary>质量标志</summary><p>{esc(flags or "无区域级标志")}</p></details></section>')
     warnings=''.join('<li>'+esc(s)+'</li>' for s in result.warnings)
@@ -115,7 +115,7 @@ def _pdf(result,summary,images,path,unit='cy/px'):
             channels=[ch for ch in rec['channels'] if (rec['metric'],ch['channel']) in images]
             if not channels:continue
             new_page();text(QRectF(margin,15,content,55),rec['name'],17,True)
-            text(QRectF(margin,77,content,60),rec['reason'] or '同一分析的通道共用色标；白点实测，颜色覆盖至有效测试区域边界。请结合测量质量标志解释结果。',10)
+            text(QRectF(margin,77,content,60),rec['reason'] or '同一分析的通道共用色标；白点实测，灰色斜线为未测得；仅相邻有效区域间插值，颜色至区域边界。',10)
             n=max(1,len(channels));gap=12;cw=(content-gap*(n-1))/n
             for i,ch in enumerate(channels):
                 x=margin+i*(cw+gap)

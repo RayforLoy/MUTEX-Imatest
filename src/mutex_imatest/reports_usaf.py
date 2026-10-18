@@ -16,7 +16,7 @@ NOTES=[
  '灰度为指定传递域内的加权 RGB，默认权重 0.2126 / 0.7152 / 0.0722；未知 ICC / 输入曲线时不能称为标定亮度或光学 MTF。',
  '单帧仅给出当前清晰度、方向差异和横向 RGB 位移；RGB 最佳焦位、轴向焦差、倾斜与场曲拟合需要至少 5 个包围峰值的焦位。',
  '本次测量含图卡印刷、透射材料、曝光剪切、照明、扫描 / 去马赛克 / 锐化等影响；不能从单帧单独归因于镜头或扫描仪。',
- '热力图白点是实测单元；开启插值时连接相邻测点，外缘颜色延续至测试区域边界，区域外与大空洞透明。边缘颜色为显示估计；所有响应值均来自扫描原像素。']
+ '热力图白点是实测单元；灰色斜线为当前指标未测得，不代表零分辨率。仅相邻有效测点间插值，不跨缺失测点连接；外缘颜色延续至测试区域边界。边缘颜色为显示估计；所有响应值均来自扫描原像素。']
 
 def fmt(v,digits=4):return '—' if v is None else f'{v:.{digits}g}'
 
@@ -149,7 +149,7 @@ def export_html(result,preview,path):
 <p>算法 {esc(result.settings.get('algorithm_version'))} · {result.elapsed_seconds:.2f} 秒 · 阈值 {result.optical_summary['threshold']:.3g} / {esc(result.optical_summary['threshold_mode'])}</p>
 <p class="warning">本图为单帧。RGB 最佳焦位与轴向焦差未测得；请导入至少 5 个包围峰值的焦位后选择 ALL 拟合。未知曲线 / 剪切数据仅用于当前输入响应和相对调焦。</p>
 <h2>五通道当前实测分辨率</h2><p>双向取较弱方向。每列“最高”在有效单元中独立取最大值；各单位最高值可能来自不同位置。高于当前测试频率的能力不作外推。</p>{table([head]+rows)}
-<h2>全幅分辨率热力图</h2><p>统一色标：{limits[0]:.4g}–{limits[1]:.4g} {unit}（蓝 → 绿 → 黄 → 红）。白点为实测位置；透明区没有受支持插值。</p><div class="maps">{maps}</div>
+<h2>全幅分辨率热力图</h2><p>统一色标：{limits[0]:.4g}–{limits[1]:.4g} {unit}（蓝 → 绿 → 黄 → 红）。白点为实测位置；灰色斜线为未测得区域；不跨缺失测点插值，透明区没有受支持覆盖。</p><div class="maps">{maps}</div>
 <h2>RGB 横向位移</h2><img class="vectors" src="{vectors}" alt="RGB displacement vectors"><pre>{esc(json.dumps(shift_statistics(result),ensure_ascii=False,indent=2))}</pre>
 <h2>各单元完整 CTF 曲线</h2><p>{channels}</p><button onclick="document.querySelectorAll('details.unit').forEach(x=>x.open=true)">展开所有单元</button><button onclick="document.querySelectorAll('details.unit').forEach(x=>x.open=false)">收起所有单元</button><button onclick="document.body.classList.toggle('showraw')">切换原始 / 归一化 CTF</button>{curves}
 <h2>测量定义与质量检查</h2><ol>{notes}</ol><pre>{esc(summary_text(result))}</pre>
