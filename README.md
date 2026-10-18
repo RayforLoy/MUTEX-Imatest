@@ -32,16 +32,16 @@
 
 ## 下载与运行
 
-前往 [GitHub Releases](https://github.com/RayforLoy/MUTEX-Imatest/releases/latest) 获取便携版。当前发布版本为 **v0.7.3**，验证环境为 **Windows 11 x64**。
+前往 [GitHub Releases](https://github.com/RayforLoy/MUTEX-Imatest/releases/latest) 获取便携版。当前发布版本为 **v0.8.0**，验证环境为 **Windows 11 x64**。
 
-v0.7.3 修复稀疏热力图把远隔测点连成色带的问题：插值遵循完整测试布局，未测得区域显示灰色斜线和原因提示；保留 v0.7.2 的 Windows 主题配色与横向 USAF 修复，完整发布包继续包含全部模板。
+v0.8.0 改进整卡 USAF 的 CTF50 / CTF20 提取，增加锐化 / 振铃光晕检测、未测得原因汇总、实时计算日志和完整错误记录。热力图保留缺失区域与有效覆盖率，完整发布包继续包含全部模板。旧结果需要重新分析才能获得新增测量。
 
 | 文件 | 用途 |
 | --- | --- |
-| [Windows x64 · 7z](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.7.3/MUTEX-Imatest-0.7.3-windows-x64.7z) | 体积更小，使用兼容 7z 的工具解压 |
-| [Windows x64 · ZIP](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.7.3/MUTEX-Imatest-0.7.3-windows-x64.zip) | 可使用 Windows 自带功能解压 |
-| [完整模板包](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.7.3/MUTEX-Imatest-0.7.3-templates.zip) | 单独获取全部 9 套模板；便携版已包含 |
-| [完整源码包](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.7.3/MUTEX-Imatest-0.7.3-source.zip) | 源码、全部模板资产及对应 LibRaw 原始发行包 |
+| [Windows x64 · 7z](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.8.0/MUTEX-Imatest-0.8.0-windows-x64.7z) | 体积更小，使用兼容 7z 的工具解压 |
+| [Windows x64 · ZIP](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.8.0/MUTEX-Imatest-0.8.0-windows-x64.zip) | 可使用 Windows 自带功能解压 |
+| [完整模板包](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.8.0/MUTEX-Imatest-0.8.0-templates.zip) | 单独获取全部 9 套模板；便携版已包含 |
+| [完整源码包](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.8.0/MUTEX-Imatest-0.8.0-source.zip) | 源码、全部模板资产及对应 LibRaw 原始发行包 |
 
 1. 下载任一 **Windows x64** 包，完整解压到可写目录。
 2. 双击目录中的 **`MUTEX Imatest.exe`**。无需另行安装 Python。
@@ -49,7 +49,7 @@ v0.7.3 修复稀疏热力图把远隔测点连成色带的问题：插值遵循�
 
 两个 Windows 包的内容一致，均包含 GUI、`MUTEX-CLI.exe`、全部模板、文档及许可证。请保留 `_internal` 和其余文件，直接运行解压目录中的程序；`build/` 是开发时的中间产物目录。
 
-校验文件见 [SHA256SUMS.txt](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.7.3/SHA256SUMS.txt)，大小与哈希清单见 [release-manifest.json](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.7.3/release-manifest.json)。PowerShell 可用 `Get-FileHash .\下载文件名 -Algorithm SHA256` 核对。
+校验文件见 [SHA256SUMS.txt](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.8.0/SHA256SUMS.txt)，大小与哈希清单见 [release-manifest.json](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.8.0/release-manifest.json)。PowerShell 可用 `Get-FileHash .\下载文件名 -Algorithm SHA256` 核对。
 
 ## 快速开始
 
@@ -76,7 +76,8 @@ v0.7.3 修复稀疏热力图把远隔测点连成色带的问题：插值遵循�
 | 几何与纹理 | 棋盘格角点残差、径向畸变、点阵二维色差、点扩散、参考纹理与对数频率响应 |
 | 图像质量工作台 | 13 类任务：传感器、镜头标定 / 去畸变、SSIM / PSNR、视频与重复帧、采集、仿真、锐度排名、测试计划等 |
 | 模板与预览 | SVG / PDF 导入、整卡 / 局部定位、通用图案检测、模板预览与管理、口令加密导入 / 导出、90° 方向工具 |
-| 结果与自动化 | 64 项测量参考、用户评价目标、同步比较、会话、文件监视、CLI 批处理、SQLite 测试历史、HTML / PDF / JSON / CSV / PNG |
+| 锐化与诊断 | 斜边 / USAF 内部边缘的亮暗光晕、噪声下限、逐通道热力图，真实阶段日志与完整异常链 |
+| 结果与自动化 | 65 项测量参考、用户评价目标、同步比较、会话、文件监视、CLI 批处理、SQLite 测试历史、HTML / PDF / JSON / CSV / PNG |
 
 热力图由测点插值，并扩展至有效测试区域外缘；区域外与明显大空洞透明。关闭插值后仅在测试区域内填色。显示插值不改变原始测量数值。
 
@@ -123,7 +124,7 @@ Git 仓库仅包含内置验证卡及公开图卡。两套授权图卡资产随 
 
 **报告可离线打开与分享**：HTML 内嵌图像；PDF 供打印和归档；可附 JSON / CSV 测量数据、PNG 热力图及详细频率曲线。整卡流程还可导出原尺寸 Y / Y_align 灰度 TIFF 与有效掩码。结果记录源文件指纹、模板快照、算法 / 解码器版本、输入曲线、尺度、配准及质量标志。
 
-**评价不只显示一个分数**：64 项图卡测量和 13 类工作台任务提供参考值、适用条件及结果解释，汇总中位数、最差值和有效覆盖率；可以设置带单位的用户目标。定义参考、工程建议和用户目标分别标注。见 [测量评价](docs/MEASUREMENT_EVALUATION.md) 与 [工作台评价](docs/WORKFLOW_EVALUATION.md)。
+**评价不只显示一个分数**：65 项图卡测量和 13 类工作台任务提供参考值、适用条件及结果解释，汇总中位数、最差值和有效覆盖率；可以设置带单位的用户目标。定义参考、工程建议和用户目标分别标注。见 [测量评价](docs/MEASUREMENT_EVALUATION.md) 与 [工作台评价](docs/WORKFLOW_EVALUATION.md)。
 
 解读结果时需注意：
 
@@ -173,7 +174,7 @@ Git 克隆不含两套授权图卡的派生资产；如需与便携版相同的�
 
 ### 验证与打包
 
-v0.7.3 的 **334 项自动测试**、冻结版 GUI / CLI 流程、HTML / PDF、模板加密及格式检查已通过。[Windows 构建记录](https://github.com/RayforLoy/MUTEX-Imatest/actions/workflows/build-release.yml) 保留构建与验收流程；其工作流为手动触发发布构建。另有 8 份固定版本的官方公开示例跑通记录，此验证不等于商业软件数值等价。实际 4.23 GB TIFF 的五通道回归在本地完成，私有输入不上传云端。
+v0.8.0 的 **398 项自动测试**覆盖数值真值、无效数据、锐化反例和错误诊断。[Windows 构建记录](https://github.com/RayforLoy/MUTEX-Imatest/actions/workflows/build-release.yml) 保留冻结版 GUI / CLI、HTML / PDF、全部模板和格式验收流程；其工作流为手动触发发布构建。另有 8 份固定版本的官方公开示例跑通检查，此验证不等于商业软件数值等价。实际 4.23 GB TIFF、999.tif 和手机局部图卡回归在本地完成，私有输入不上传云端。
 
 ```powershell
 .\.venv\Scripts\python.exe -m pytest --junitxml=validation/pytest.xml
@@ -210,6 +211,8 @@ GUI 与 CLI 共用分析引擎，解码 / 测量在独立工作进程运行；�
 | --- | --- |
 | 日常操作与调焦流程 | [使用指南](docs/USER_GUIDE.md) |
 | USAF 全频率、五通道与分辨率单位 | [整卡分析](docs/WHOLE_CARD.md) |
+| CTF50 / CTF20 的提取方法与缺失原因 | [USAF CTF](docs/USAF_CTF.md) |
+| 锐化检测、实时日志与排错 | [锐化与诊断](docs/SHARPENING_AND_DIAGNOSTICS.md) |
 | 星图 / 楔形 / 斜边、局部拍摄与定位 | [混合图卡](docs/MIXED_TARGETS.md) |
 | 图卡下载、打印、版权与来源 | [公开模板库](template/README.md) · [署名](template/ATTRIBUTION.md) · [资产边界](docs/ASSET_PACKS.md) |
 | 指标参考、自定义目标与结果解释 | [测量评价](docs/MEASUREMENT_EVALUATION.md) · [工作台评价](docs/WORKFLOW_EVALUATION.md) |
@@ -223,7 +226,7 @@ GUI 与 CLI 共用分析引擎，解码 / 测量在独立工作进程运行；�
 
 欢迎通过 [Issues](https://github.com/RayforLoy/MUTEX-Imatest/issues) 提交问题、格式兼容样本或功能建议，通过 Pull Request 改进代码与文档。
 
-报告问题时，请附软件版本、Windows 版本、相机 / 扫描仪型号、文件格式与压缩模式、复现步骤和预期结果；测量问题还应说明图卡、输入曲线、物理标定与质量标志。样本需具有可分享权限，可先提供不含私人内容的最小复现文件。
+报告问题时，请附软件版本、Windows 版本、相机 / 扫描仪型号、文件格式与压缩模式、复现步骤和预期结果；测量问题还应说明图卡、输入曲线、物理标定与质量标志。可在「帮助」菜单打开任务和界面错误日志目录，检查其中的本机路径等信息后再分享。样本需具有可分享权限，可先提供不含私人内容的最小复现文件。
 
 算法修改应包含可解释的合成真值或独立参考测试；模板贡献需附作者、来源、许可、实物尺寸约定及可核对的测量定义。请保留第三方署名，避免提交原始用户照片、私有 SVG / PDF、缓存和凭据。
 

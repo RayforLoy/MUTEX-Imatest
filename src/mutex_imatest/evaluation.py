@@ -23,11 +23,14 @@ STATUS_COLORS = {'good':'#147565', 'pass':'#147565', 'watch':'#986200', 'poor':'
 RULE_NOTE = '先检查测量有效性，再解释数值。工程建议不是 ISO / 厂商合格线；本帧最高值仅作相对参考。自定义目标不构成标准认证。'
 FREQUENCY_UNITS = {'cy/px','lp/mm','DPI','LW/PH','LP/PH'}
 RESPONSE_METRICS = FREQUENCY_METRICS | {'usaf_focus_score','mtf_area','information_capacity_1d',
+    'sharpening_halo_pct',
     'contrast_at_frequency','mtf_nyquist','overshoot_pct','undershoot_pct','alignment_gain_pct',
     'relative_illumination_min_pct','corner_illumination_pct','illumination_nonuniformity_pct','spatial_snr_db'}
 CAUTIONS = {
     'clipping_advisory':'保留了剪切信号，只适合受限比较',
     'aliasing_risk':'存在混叠风险', 'bars_not_separated':'条纹未可靠分离',
+    'bar_geometry_mismatch':'暗条间距或位置与靶频率不符','ctf_noise_limited':'内部条纹起伏未通过噪声检查',
+    'ctf_segment_after_clipping':'交点由剪切点之后相邻且未剪切的频点实测，未跨剪切点插值',
     'frequency_gap':'测试频率不连续', 'target_limited':'达到图卡测试上限，只是实测下界',
     'above_highest_test_frequency':'超过图卡测试上限', 'below_lowest_test_frequency':'低于图卡频率覆盖',
     'mtf50_above_nyquist':'MTF50 超过采样奈奎斯特参考，应检查锐化 / 混叠',
@@ -301,7 +304,11 @@ def assess_channel(result, key, rows, unit=None):
             return max(goal.get('min',-math.inf)-v,v-goal.get('max',math.inf))
         candidates=[m for m,a in zip(rows,assessments) if a['status']!='unavailable' and a['value'] is not None]
         if candidates:worst=metric_value(result,max(candidates,key=violation),key,unit)
+    from .analysis_audit import reason_for,REASONS
+    missing=Counter(('missing_calibration' if key in FREQUENCY_METRICS and unit in {'lp/mm','DPI'} and m.valid and m.metric(key) is not None
+                     else reason_for(result,m,key)) for m,a in zip(rows,assessments) if a['status']=='unavailable')
     return {'status':status,'label':label,'text':text,'valid':valid,'total':total,'unit':unit,
+            'missing_reasons':dict(missing),'missing_descriptions':{REASONS.get(k,k):v for k,v in missing.items()},
             'coverage_pct':100*valid/total if total else 0,'counts':dict(counts),'limitations':dict(limitations),
             'median':float(np.median(values)) if values else None,'p10':float(np.percentile(values,10)) if values else None,
             'p90':float(np.percentile(values,90)) if values else None,'worst':worst,

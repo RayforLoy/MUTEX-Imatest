@@ -154,7 +154,7 @@ def test_old_results_can_be_evaluated_without_remeasurement_or_mutation(tmp_path
     m=sample(.2,'mtf50');r=result([m]);old=r.to_dict();old.pop('evaluation_summary')
     loaded=AnalysisResult.from_dict(old);before=copy.deepcopy(loaded.to_dict())
     all_results=evaluate_result(loaded)
-    assert len(all_results['items'])==64
+    assert len(all_results['items'])==len(REFERENCES)==65
     assert all_results['version'] and all(item['reference']['criteria'] for item in all_results['items'])
     assert not next(item for item in all_results['items'] if item['metric']=='best_focus')['channels']
     save_evaluation(loaded,tmp_path,['mtf50','rgb_shift_px'])

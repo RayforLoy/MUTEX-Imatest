@@ -1,5 +1,5 @@
 from __future__ import annotations
-import time, json
+import time, json,traceback
 from dataclasses import asdict
 from pathlib import Path
 import numpy as np
@@ -13,7 +13,7 @@ from .sfr import slanted_edge
 from .targets import usaf,star
 from .extra import flat_field,step_patch,color_patch,point_spread,texture,grid_geometry
 
-ALGORITHM_VERSION="mutex-native-2026.10.18"
+ALGORITHM_VERSION="mutex-native-2026.10.19-halo-audit-v1"
 def analyze(path,chart,config=None,cancel=None,progress=None,focus_position=None,focus_unit=None):
     config=(config or AnalysisConfig()).validate()
     progress=progress or (lambda *a:None)
@@ -22,16 +22,20 @@ def analyze(path,chart,config=None,cancel=None,progress=None,focus_position=None
         return analyze_source(source,chart,config,cancel,progress,focus_position,focus_unit,start)
 
 def analyze_source(source,chart,config,cancel=None,progress=None,focus_position=None,focus_unit=None,start=None):
+    from ..diagnostics import log_event
     if config.backend!="native":raise ValueError("本版 MTF Mapper 是独立复核入口，尚未作为数值后端对齐；请选择 native")
     include_source_time=start is None
     start=start or time.perf_counter();progress=progress or (lambda *a:None)
     if isinstance(chart,dict): chart=ChartDefinition.from_dict(chart)
+    log_event('DECODE',f'{source.metadata.width:,} × {source.metadata.height:,} · {source.metadata.bits_per_sample}-bit × {source.metadata.channels} · {getattr(source.metadata,"decoder","native")}',metadata=source.metadata.__dict__)
+    log_event('PLAN',f'{chart.name} · {len(chart.regions)} 个区域 · 通道 {config.channels}',selected_metrics=config.analysis_metrics)
     from ..analysis_catalog import required_channels,RGB_METRICS
     if config.analysis_metrics is not None:
         if not config.analysis_metrics:raise ValueError('请先勾选至少一个分析项目')
         if source.metadata.channels<3 and set(config.analysis_metrics)&RGB_METRICS:raise ValueError('RGB 位移和对齐分析需要源图像包含三个颜色通道')
         config=AnalysisConfig.from_dict(dict(config.to_dict(),channels=required_channels(config.channels,config.analysis_metrics)))
     H,registration=register_chart(chart,source,config)
+    log_event('REGISTER',registration.get('warning') or registration.get('method','完成配准'),registration_status=registration.get('unit_diagnostics',{}))
     if registration.get('detected_regions') is not None:
         # Unmatched generic targets live in current image coordinates. The
         # printable reference's dimensions must never become a false scale.
@@ -237,8 +241,10 @@ def analyze_source(source,chart,config,cancel=None,progress=None,focus_position=
                 measurements.append(Measurement(region.id,region.label or region.id,region.kind,channel,position,box,values,units,result.get("curves",{}),flags,float(result.get("confidence",1)),f"{ALGORITHM_VERSION}/{region.kind}",
                                                result.get("direction_deg"),scale,result.get('diagnostics',{})))
             except (ValueError,np.linalg.LinAlgError,FloatingPointError) as exc:
+                log_event('ROI-REJECT',f'{region.id} / {channel} · {type(exc).__name__}: {exc}',box_pixels=box,traceback=traceback.format_exc())
                 measurements.append(Measurement(region.id,region.label or region.id,region.kind,channel,position,box,
-                                    flags=["fit_failed"],confidence=0,values={},method=f"{ALGORITHM_VERSION}: {exc}"))
+                                    flags=["fit_failed"],confidence=0,values={},method=f"{ALGORITHM_VERSION}: {exc}",
+                                    diagnostics={'stage':'roi_measurement','exception_type':type(exc).__name__,'message':str(exc),'box_pixels':box}))
         if region.kind=="edge" and all(c in edge_outputs for c in ["R","G","B"]):
             ref=edge_outputs["G"]
             if "edge_center" in ref:
@@ -267,6 +273,19 @@ def analyze_source(source,chart,config,cancel=None,progress=None,focus_position=
                         focus_position if focus_position is not None else auto_z,
                         focus_unit or (auto_unit if auto_z is not None else config.focus_unit),
                         time.perf_counter()-start+(getattr(source,"open_elapsed_seconds",0) if include_source_time else 0),warnings,optical_summary=optical_summary)
+    from ..analysis_audit import summarize_audit
+    result.diagnostics_summary=summarize_audit(result)
+    from ..resolution import view_result
+    halos=view_result(result,'sharpening_halo_pct').measurements
+    halo_valid=[m for m in halos if m.valid and m.metric('sharpening_halo_pct') is not None]
+    halo_detected=sum(m.values['sharpening_halo_pct']>=2 for m in halo_valid)
+    boosted=sum(m.values.get('mtf_peak',0)>1.08 for m in measurements if m.kind=='edge' and m.valid)
+    result.diagnostics_summary['sharpening']={'valid_halo_regions':len(halo_valid),'halo_regions_ge_2pct':halo_detected,'sfr_peak_boost_regions':boosted,
+        'definition':'Measured halos / SFR boost are evidence of sharpening or ringing, not proof of processing history; clipping may hide halos.'}
+    log_event('SHARPEN',f'{halo_detected}/{len(halo_valid)} 个有效区域检出 ≥2% 光晕；{boosted} 个斜边有 SFR 峰值增益',interpretation=result.diagnostics_summary['sharpening']['definition'])
+    log_event('QUALITY',f'{sum(m.valid for m in measurements):,}/{len(measurements):,} 个原始测量通过质量检查',flags=result.diagnostics_summary['measurement_flags'])
+    for item in result.diagnostics_summary['items']:
+        log_event('RESULT',f"{item['name']} / {item['channel']} · {item['valid']}/{item['total']} 有效",missing_reasons=item['missing_descriptions'])
     if config.analysis_metrics is not None:
         from ..analysis_plan import summarize_selected
         result.analysis_summary=summarize_selected(result)

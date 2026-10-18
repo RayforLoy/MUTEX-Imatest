@@ -73,7 +73,14 @@ def main(argv=None):
     temporal=sub.add_parser("temporal");temporal.add_argument("images",nargs="+");temporal.add_argument("--roi",nargs=4,type=int,required=True)
     temporal.add_argument("--channel",default="G");temporal.add_argument("--transfer",choices=["linear","srgb","unknown"],default="linear");temporal.add_argument("--out",required=True)
     ns=parser.parse_args(args)
+    journal=None
     try:
+        if ns.command not in {'analyze','gui','info','charts','test-db','selftest'}:
+            from .diagnostics import JobDiagnostics
+            destination=Path(ns.out)
+            diagnostic_folder=destination.parent/(destination.stem+'-logs') if ns.command in {'focus','temporal','chart-prepare'} else destination
+            candidate=JobDiagnostics(diagnostic_folder,{'action':ns.command,'arguments':vars(ns)},console=True)
+            candidate.__enter__();journal=candidate
         if ns.command=="selftest":
             from .selftest import run
             return run(ns.out,not ns.visible)
@@ -154,8 +161,9 @@ def main(argv=None):
                     chart.regions=generated+[r for r in chart.regions if r.kind!='usaf']
                 config.channels='RGBY';config.registration='usaf';config.metric='resolution_limit'
             for path in ns.images:
-                with ImageSource(path,config) as source:
-                    folder=Path(ns.out)/Path(path).stem;folder.mkdir(parents=True,exist_ok=True)
+                from .diagnostics import JobDiagnostics,job_context
+                folder=Path(ns.out)/Path(path).stem
+                with JobDiagnostics(folder,job_context({'action':'analyze','path':str(path),'config':config.to_dict(),'chart':chart.to_dict() if chart else {}}),console=True) as image_journal, ImageSource(path,config,progress=image_journal.progress) as source:
                     if ns.profile:
                         from .official_charts import prepare_profile
                         current=prepare_profile(source,ns.profile,box=ns.profile_box,rows=ns.rows,cols=ns.cols,reference=ns.reference,
@@ -165,7 +173,8 @@ def main(argv=None):
                         save_chart(current,folder/'chart.json')
                     else:current=chart or auto_edge_chart(source)
                     from .analysis.engine import analyze_source
-                    result=analyze_source(source,current,config,focus_position=ns.z,focus_unit=ns.z_unit)
+                    result=analyze_source(source,current,config,progress=image_journal.progress,focus_position=ns.z,focus_unit=ns.z_unit)
+                    image_journal.event('EXPORT','保存分析结果、预览及报告')
                     preview=folder/"preview.png";Image.fromarray(source.preview()).save(preview)
                     if ns.report:export_bundle(result,preview,folder,config.metric,"G",pdf=ns.report_format!="html",html=ns.report_format!="pdf")
                     else:result.save(folder/"result.json")
@@ -229,8 +238,13 @@ def main(argv=None):
                     frames.append(a)
             values=temporal_noise(frames);values.update(roi=ns.roi,channel=ns.channel,source_images=ns.images,transfer=ns.transfer)
             atomic_json(ns.out,values);print(json.dumps(values,ensure_ascii=False));return 0
-    except KeyboardInterrupt:return 130
+    except KeyboardInterrupt:
+        if journal:journal.cancelled=True
+        return 130
     except Exception as exc:
+        if journal:journal.error(exc)
         print(f"Error: {exc}",file=sys.stderr);return 1
+    finally:
+        if journal:journal.__exit__(None,None,None)
     return 0
 

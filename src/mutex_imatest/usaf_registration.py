@@ -206,16 +206,21 @@ def register_usaf(chart,source,config):
     groups=defaultdict(list)
     for f in chart.fiducials:
         if f.get("kind")=="usaf":groups[f["unit_id"]].append(f)
-    transforms={}
-    for unit,fiducials in groups.items():
+    transforms={};diagnostics={}
+    progress=getattr(source,'progress',lambda *a:None)
+    for index,(unit,fiducials) in enumerate(groups.items()):
         check_cancel(getattr(source,"cancel",None))
+        progress(5+int(12*index/max(1,len(groups))),f'[REGISTER] 原像素定位 {index+1}/{len(groups)} · {unit}')
         locations=_project([f["position"] for f in fiducials],H)
+        inside=np.all((locations>=[0,0])&(locations<[source.metadata.width,source.metadata.height]),axis=1)
+        diagnostic=diagnostics[unit]={'status':'insufficient_matches','visible_fiducials':int(inside.sum()),'total_fiducials':len(fiducials)}
         first=next(f for f in fiducials if f["k"]==0 and f["direction"]=="vertical")
         point=np.array(first["position"])
         p0=float(np.linalg.norm(_project([point,point+[first["period_normalized"][0],0]],H)[1]-_project([point],H)[0]))
         lo=np.maximum(np.floor(locations.min(axis=0)-2*p0),0).astype(int)
         hi=np.minimum(np.ceil(locations.max(axis=0)+2*p0),[source.metadata.width,source.metadata.height]).astype(int)
-        if min(hi-lo)<16:continue
+        if min(hi-lo)<16:
+            diagnostic['status']='outside_image';continue
         raw=source.read_roi((*lo,*(hi-lo)))
         detected=_triplets(_gray(raw))
         del raw
@@ -233,17 +238,22 @@ def register_usaf(chart,source,config):
             if candidates:
                 chosen=min(candidates,key=lambda d:np.linalg.norm(d["center"]+lo-prediction))
                 P.append(f["position"]);Q.append(chosen["center"]+lo)
+        diagnostic['matches']=len(P)
         if len(P)<10:continue
         fit,inliers=cv2.estimateAffine2D(np.array(P),np.array(Q),method=cv2.RANSAC,ransacReprojThreshold=2.5,maxIters=2000,confidence=.999)
-        if fit is None or inliers.sum()<10:continue
+        if fit is None or inliers.sum()<10:
+            diagnostic['status']='inconsistent_matches';continue
         keep=inliers.ravel().astype(bool)
         design=np.column_stack([P,np.ones(len(P))])
         local=np.linalg.lstsq(design[keep],np.array(Q)[keep],rcond=None)[0]
         residual=np.linalg.norm(design@local-Q,axis=1)
         rms=float(np.sqrt(np.mean(residual[keep]**2)))
-        if rms>1.8:continue
+        diagnostic.update(inliers=int(keep.sum()),rms_px=rms)
+        if rms>1.8:
+            diagnostic['status']='registration_residual';continue
+        diagnostic['status']='located'
         transforms[unit]={"homography":np.vstack([local.T,[0,0,1]]).tolist(),"matches":int(keep.sum()),"rms_px":rms}
     if not transforms:raise ValueError("USAF 局部定位未通过；没有可安全测量的区域")
-    status.update(method="vector_usaf_native_refinement",verified=False,homography=H.tolist(),unit_transforms=transforms,
+    status.update(method="vector_usaf_native_refinement",verified=False,homography=H.tolist(),unit_transforms=transforms,unit_diagnostics=diagnostics,
                   warning=f"USAF 矢量定位：{len(transforms)}/{len(groups)} 单元通过原像素局部拟合。重复图案的绝对单元编号仍需核对标尺；未重采样测量像素。")
     return H,status

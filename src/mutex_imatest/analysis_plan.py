@@ -27,6 +27,11 @@ def summarize_selected(result,metrics=None,unit=None):
                              'mean':float(np.mean(values)) if values else None,'min':float(min(values)) if values else None,
                              'max':float(max(values)) if values else None,
                              'flags':dict(Counter(flag for m in selected for flag in m.flags))})
+            from .analysis_audit import reason_for,REASONS
+            missing=Counter(reason_for(result,m,key) if metric_value(result,m,key,display_unit) is None or not m.valid else 'low_confidence'
+                            for m in selected if not (m.valid and m.confidence>.05 and metric_value(result,m,key,display_unit) is not None))
+            channels[-1]['missing_reasons']=dict(missing)
+            channels[-1]['missing_descriptions']={REASONS.get(k,k):v for k,v in missing.items()}
             assessment=assess_channel(result,key,selected,display_unit)
             assessment.pop('point_assessments')
             channels[-1]['evaluation']=assessment
@@ -45,10 +50,10 @@ def save_summary(summary,folder):
     atomic_json(folder/'analysis-results.json',summary)
     with (folder/'analysis-results.csv').open('w',encoding='utf-8-sig',newline='') as file:
         writer=csv.writer(file);writer.writerow(['metric','name','channel','valid','total','mean','min','max','unit','status','reason','flags',
-                                               'evaluation','evaluation_text','median','p10','p90','worst','coverage_pct','reference','criteria','basis','rule_version'])
+                                               'evaluation','evaluation_text','median','p10','p90','worst','coverage_pct','reference','criteria','basis','rule_version','missing_reasons'])
         for item in summary.get('items',[]):
             for ch in item['channels'] or [{}]:
                 evaluation=ch.get('evaluation',{});ref=item.get('reference',{})
                 writer.writerow([item['metric'],item['name'],*[ch.get(k,'') for k in ['channel','valid','total','mean','min','max','unit']],item['status'],item['reason'],ch.get('flags',{}),
                                  evaluation.get('label','无法评价'),evaluation.get('text',item['reason']),*[evaluation.get(k) for k in ['median','p10','p90','worst','coverage_pct']],
-                                 ref.get('reference',''),ref.get('criteria',''),ref.get('basis',''),ref.get('version','')])
+                                 ref.get('reference',''),ref.get('criteria',''),ref.get('basis',''),ref.get('version',''),ch.get('missing_descriptions',{})])

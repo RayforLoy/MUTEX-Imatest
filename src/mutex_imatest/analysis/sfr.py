@@ -6,9 +6,12 @@ from scipy.special import erf
 
 def first_crossing(x,y,threshold):
     x=np.asarray(x); y=np.asarray(y)
-    indices=np.flatnonzero((y[:-1]>=threshold)&(y[1:]<threshold))
+    if len(y) and y[0]==threshold:return float(x[0])
+    indices=np.flatnonzero((y[:-1]>=threshold)&(y[1:]<=threshold))
     if not len(indices): return None
-    i=int(indices[0]); return float(x[i]+(threshold-y[i])*(x[i+1]-x[i])/(y[i+1]-y[i]))
+    i=int(indices[0])
+    if y[i]==y[i+1]:return float(x[i])
+    return float(x[i]+(threshold-y[i])*(x[i+1]-x[i])/(y[i+1]-y[i]))
 
 def robust_polyfit(y,x,degree):
     mask=np.isfinite(x)
@@ -107,6 +110,9 @@ def slanted_edge(image,config):
             "esf_empty_fraction":float(1-have.mean())}
     if values["mtf50"] is None: flags.append("mtf50_above_nyquist")
     if peak>1.08: flags.append("sharpening_or_ringing")
+    from .sharpening import esf_halos
+    values.update(esf_halos(x,esf))
+    if values.get('sharpening_halo_pct',0)>=2 and 'sharpening_or_ringing' not in flags:flags.append('sharpening_or_ringing')
     if values["mtf_nyquist"]>.3: flags.append("aliasing_risk")
     # Direction is the edge normal; RGB shifts are one-dimensional projections.
     normal=np.array([1,-slope]) if not transposed else np.array([-slope,1])

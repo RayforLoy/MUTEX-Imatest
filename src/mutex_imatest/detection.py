@@ -71,7 +71,8 @@ def transform_box(box,H,width,height):
     transformed=cv2.perspectiveTransform(corners,H)[0]
     lo=np.floor(transformed.min(axis=0)).astype(int); hi=np.ceil(transformed.max(axis=0)).astype(int)
     outside=bool(np.any(lo<0) or hi[0]>width or hi[1]>height)
-    lo=np.maximum(lo,0);hi=np.minimum(hi,[width,height])
+    # Fully off-frame targets must be empty, never negative-sized ROIs.
+    lo=np.clip(lo,[0,0],[width,height]);hi=np.clip(hi,[0,0],[width,height])
     return (int(lo[0]),int(lo[1]),int(hi[0]-lo[0]),int(hi[1]-lo[1])),outside
 
 def usaf_native_axes(H,position,direction):

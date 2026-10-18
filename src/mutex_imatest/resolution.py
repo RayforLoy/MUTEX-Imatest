@@ -44,14 +44,28 @@ def view_result(result,metric,direction="both",frequency_index=None):
         return filtered
     filtered=copy.copy(result)
     target=0 if direction=="vertical" else 90 if direction=="horizontal" else None
-    if metric in RGB_SHIFT_METRICS:
+    if metric=='sharpening_halo_pct':
+        from .models import Measurement
+        rows=[]
+        for u in result.optical_summary.get('units',[]):
+            records=u.get('sharpening',{}) if target is None else {ch:r.get('sharpening',{}) for ch,r in u['directions'].get(direction,{}).items()}
+            for ch,record in records.items():
+                if not record:continue
+                location_flag='outside_image' if result.registration.get('unit_diagnostics',{}).get(u['unit_id'],{}).get('status')=='outside_image' else 'registration_failed'
+                flags=record['flags'] if u.get('located') else [location_flag]
+                x,y=u['position'];v=record['values']
+                rows.append(Measurement(u['unit_id']+('-combined-summary' if target is None else '-'+direction+'-summary'),u['unit_id']+' · 锐化 / 振铃','usaf_summary',ch,(x,y),(int(x)-2,int(y)-2,4,4),
+                    v,{k:'%' if k.endswith('_pct') else 'count' for k in v},{'halo_profile':record.get('curve',{})},flags,record['confidence'],'native-coarse-bar-internal-halos',target))
+        rows.extend(m for m in result.measurements if m.kind=='edge')
+    elif metric in RGB_SHIFT_METRICS:
         from .models import Measurement
         rows=[]
         channels=[PAIRED_SHIFT_METRICS[metric]] if metric in PAIRED_SHIFT_METRICS else ['R','G','B']
         for u in result.optical_summary.get('units',[]):
             for ch in channels:
                 shift=u.get('rgb_shifts',{}).get(ch,{})
-                flags=['registration_failed'] if not u.get('located') else ['rgb_alignment_failed'] if not shift.get('valid') else []
+                location_flag='outside_image' if result.registration.get('unit_diagnostics',{}).get(u['unit_id'],{}).get('status')=='outside_image' else 'registration_failed'
+                flags=[location_flag] if not u.get('located') else ['rgb_alignment_failed'] if not shift.get('valid') else []
                 values={key:shift.get(value) for key,value in [('rgb_shift_px','magnitude_px'),('rgb_shift_x_px','dx_px'),('rgb_shift_y_px','dy_px')]}
                 if metric in PAIRED_SHIFT_METRICS:values[metric]=shift.get('magnitude_px')
                 values['rgb_registration_correlation']=shift.get('correlation');values['rgb_registration_rms']=shift.get('normalized_rms')

@@ -1,6 +1,7 @@
 from __future__ import annotations
 from pathlib import Path
 from dataclasses import asdict
+from collections import Counter
 import copy,json,time,uuid
 import numpy as np
 import pyqtgraph as pg
@@ -55,6 +56,17 @@ FLAG_NAMES.update({'target_mismatch':'图案 / 预期条纹未通过核验','sta
  'reference_frequency_approximate':'楔形频率来自参考栅格估计','wedge_aliasing_detected':'部分频率存在条纹混叠 / 伪分辨风险',
  'resolution_chart_limited':'受图卡频率范围限制（下界）'})
 FLAG_NAMES['star_frequency_mismatch']='部分星图频率的预期基频失配；阈值仅采用连续有效段'
+FLAG_NAMES.update({'bar_geometry_mismatch':'暗条间距 / 位置与靶频率不符','ctf_noise_limited':'内部条纹起伏不足以超过噪声'})
+FLAG_NAMES['ctf_segment_after_clipping']='CTF 交点采用剪切频点之后的未剪切连续段'
+FLAG_NAMES['strict_clipping_limits_curve']='剪切限制已确认分辨率的连续通过范围'
+METRIC_NAMES.update({'roi_contrast':'区域整体对比度（含外白底，非 CTF）','ctf_gap_min':'较弱内部间隙 CTF',
+                     'ctf_gap_max':'较强内部间隙 CTF','bar_spacing_error':'条纹间距相对误差','profile_noise_sigma':'平均剖面噪声估计'})
+METRIC_NAMES.update({'halo_overshoot_pct':'可检出亮侧光晕','halo_undershoot_pct':'可检出暗侧光晕','halo_noise_floor_pct':'光晕检测下限',
+                     'halo_element_count':'参与光晕检测的元素数','halo_edge_count':'光晕检测边缘数'})
+FLAG_NAMES['halo_insufficient_evidence']='低频边缘证据不足，不能判断锐化 / 振铃'
+FLAG_NAMES['directional_resolution_incomplete']='双向连续分辨率证据不完整'
+FLAG_NAMES['outside_image']='图像未覆盖该单元'
+FLAG_NAMES['insufficient_contiguous_support']='连续有效频率证据不足'
 
 def label(text,name=None):
     widget=QLabel(text)
@@ -197,7 +209,8 @@ class MainWindow(QMainWindow):
         focus_tab=QWidget();focus_layout=QHBoxLayout(focus_tab)
         self.focus_plot=plot_widget("焦位 / 高度","归一化评分");focus_layout.addWidget(self.focus_plot,2)
         self.focus_detail=QPlainTextEdit();self.focus_detail.setReadOnly(True);focus_layout.addWidget(self.focus_detail,1);self.tabs.addTab(focus_tab,"最佳焦位 / 场曲")
-        self.logs=QPlainTextEdit();self.logs.setReadOnly(True);self.tabs.addTab(self.logs,"日志")
+        self.logs=QPlainTextEdit();self.logs.setReadOnly(True);self.logs.setMaximumBlockCount(4000);self.tabs.addTab(self.logs,"日志")
+        self.logs.setFont(QFont('Consolas',10));self.logs.setStyleSheet('QPlainTextEdit{background:#122a3a;color:#b9ecdf;border:1px solid #284b5c;padding:8px;}')
         self.optical_detail=QPlainTextEdit();self.optical_detail.setReadOnly(True);self.tabs.addTab(self.optical_detail,'整卡 / RGB 汇总')
         self.batch_table=QTableWidget(0,11);self.batch_table.setHorizontalHeaderLabels(['分析项目','通道','有效 / 总数','均值','最大值','单位','状态','中位数','最差值','结果评价','参考值 / 标准'])
         self.batch_table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers);self.batch_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
@@ -287,6 +300,8 @@ class MainWindow(QMainWindow):
         helpmenu=self.menuBar().addMenu("帮助")
         action=QAction("测量限制与兼容性",self);action.triggered.connect(self.show_help);helpmenu.addAction(action)
         helpmenu.addAction(self.evaluation_action)
+        self.logs_action=QAction('打开本次分析日志目录',self);self.logs_action.triggered.connect(self.open_diagnostics_folder);helpmenu.addAction(self.logs_action)
+        self.ui_logs_action=QAction('打开界面错误日志目录',self);self.ui_logs_action.triggered.connect(self.open_ui_logs);helpmenu.addAction(self.ui_logs_action)
     def restore_settings(self):
         c=self.config
         self.transfer.setCurrentIndex(max(0,self.transfer.findData(c.transfer)));self.analysis_channels.setCurrentText(c.channels)
@@ -502,14 +517,26 @@ class MainWindow(QMainWindow):
                 save_chart(chart,library_dir()/(chart.id+'.json'));self.chart_saved(chart)
             self.analysis_channels.setCurrentText('RGBY');self.clipping_policy.setCurrentIndex(self.clipping_policy.findData(False))
             self.metric_selector.setCurrentIndex(self.metric_selector.findData('resolution_limit'))
-            self.metric_selector.set_checked_keys(['resolution_limit','ctf50','ctf20','ctf10','ca_r_g_px','ca_b_g_px','alignment_gain_pct'])
+            self.metric_selector.set_checked_keys(['resolution_limit','ctf50','ctf20','ctf10','sharpening_halo_pct','ca_r_g_px','ca_b_g_px','alignment_gain_pct'])
             self.analysis_selection_changed()
             self.add_log('整卡：所有可识别频率、双向、RGB + 两种灰度；保留剪切提示，输入传递曲线保持当前设置。')
             self.analyze_selected()
         except Exception as exc:self.message_error(exc)
     def add_log(self,message):self.logs.appendPlainText(time.strftime("%H:%M:%S")+"  "+str(message))
     def log_error(self,message):self.add_log("错误："+str(message));self.status_text.setText(str(message));self.state.setText("任务需检查")
-    def message_error(self,message):self.log_error(message);QMessageBox.warning(self,"请检查",str(message))
+    def message_error(self,message):
+        if isinstance(message,Exception):
+            from ..diagnostics import background_error
+            path=background_error(message,{'action':'gui-operation','current_index':self.current_index})
+            self.add_log('界面错误日志：'+path)
+        self.log_error(message);QMessageBox.warning(self,"请检查",str(message))
+    def open_diagnostics_folder(self):
+        folder=Path(getattr(self,'last_log_folder',self.config.cache_path()/'jobs'))
+        folder.mkdir(parents=True,exist_ok=True);QDesktopServices.openUrl(QUrl.fromLocalFile(str(folder)))
+    def open_ui_logs(self):
+        import platformdirs
+        folder=Path(platformdirs.user_log_dir('MUTEX Imatest','MUTEX'));folder.mkdir(parents=True,exist_ok=True)
+        QDesktopServices.openUrl(QUrl.fromLocalFile(str(folder)))
     def import_dialog(self):
         paths,_=QFileDialog.getOpenFileNames(self,"导入图像","","图像 (*.tif *.tiff *.arw *.nef *.raf *.cr2 *.cr3 *.dng *.rw2 *.orf *.pef *.jpg *.jpeg *.png);;所有文件 (*)")
         self.import_paths(paths)
@@ -539,6 +566,7 @@ class MainWindow(QMainWindow):
             resources={k:config.to_dict()[k] for k in ['cache_dir','memory_mb','cache_gb','tile_cache_mb','workers','mtf_mapper_path']}
             config=AnalysisConfig.from_dict(dict(entry["result"].settings,**resources)).validate()
         payload={"action":action,"path":entry["path"],"config":config.to_dict(),"folder":self.folder_for_job()}
+        self.last_log_folder=payload['folder']
         entry["config"]=config.to_dict()
         if action=="preview" and entry["result"]:payload["expected_fingerprint"]=entry["result"].image.fingerprint
         if action=="analyze":payload.update(chart=self.current_chart().to_dict(),focus_position=entry["focus_position"],focus_unit=entry.get("focus_unit"))
@@ -564,6 +592,8 @@ class MainWindow(QMainWindow):
         info=self.jobs.get(uid,{})
         index=info.get("index")
         if event["type"]=="started":
+            if event.get('payload',{}).get('folder'):self.last_log_folder=event['payload']['folder']
+            if info.get('action')=='analyze':self.tabs.setCurrentWidget(self.logs)
             info['state']='running';info['progress']=0
             self.state.setText("离线 · 处理中");self.cancel_button.setEnabled(True)
             self.refresh_analysis_activity()
@@ -571,6 +601,7 @@ class MainWindow(QMainWindow):
             info['progress']=event['value'];info['message']=event['message']
             self.progress.setValue(event["value"]);self.status_text.setText(event["message"])
             self.refresh_analysis_activity()
+        elif event['type']=='log':self.add_log(event['message'])
         elif event["type"]=="preview" and index is not None:
             entry=self.entries[index];entry["preview"]=event["preview"];entry["metadata"]=ImageMetadata(**event["metadata"])
             entry["native_cache"]=event.get("native_cache")
@@ -762,6 +793,9 @@ class MainWindow(QMainWindow):
         if clipped:notes.append(f"{clipped} 点因信号剪切被严格排除；可按相对调焦重新分析，保留数值和警告。")
         if advisory:notes.append(f"相对调焦：{advisory} 点保留剪切提示；结果受剪切影响。")
         if failed:notes.append(f"{failed} 点定位未通过，继续排除。")
+        from ..analysis_audit import reason_for,REASONS
+        missing=Counter(reason_for(entry['result'],m,metric) for m in selected if not m.valid or m.metric(metric) is None)
+        if missing:notes.append('缺失原因：'+'；'.join(f'{REASONS.get(k,k)} {n}' for k,n in missing.items()))
         if result.settings.get("transfer")=="unknown" and not result.image.is_linear:
             notes.append("输入曲线未知：显示输入信号响应。USAF 对比度不能当作光学 MTF。")
         if metric in PAIRED_SHIFT_METRICS:
@@ -770,13 +804,14 @@ class MainWindow(QMainWindow):
         if entry['result'].optical_summary:
             from ..reports_usaf import summary_text
             self.optical_detail.setPlainText(summary_text(entry['result']))
-            self.usaf_frequency.setEnabled(metric not in MULTI_METRICS and metric not in RGB_SHIFT_METRICS)
+            self.usaf_frequency.setEnabled(metric not in MULTI_METRICS and metric not in RGB_SHIFT_METRICS and metric!='sharpening_halo_pct')
             if metric=='resolution_limit':self.summary_label.setText(f'已确认分辨率 · {unit}\n有效单元 {len(values)}；双向取较弱方向\n最高 {max(values):.4g}' if len(values) else '尚无可用分辨率')
         self.relative_focus_button.setVisible(bool(clipped and selected and all(m.kind=="usaf" for m in selected)))
         self.table.setRowCount(len(selected))
         for row,m in enumerate(selected):
             value=m.metric(data["metric"]) if data else None
             state=", ".join(FLAG_NAMES.get(f,f) for f in m.flags) or "有效"
+            if not m.valid or value is None:state=REASONS.get(reason_for(entry['result'],m,metric),'未测得')+'；'+state
             texts=[m.label,m.kind,m.channel,f"{value:.5g}" if value is not None else "—",f"{m.confidence:.2f}",state,f"{m.position[0]:.0f}, {m.position[1]:.0f}",measurement_text(result,m,metric,unit if metric in FREQUENCY_METRICS else None).split('：')[0]]
             for col,text in enumerate(texts):
                 item=QTableWidgetItem(text);item.setData(Qt.ItemDataRole.UserRole,m.region_id)
@@ -808,7 +843,7 @@ class MainWindow(QMainWindow):
         if not result:return
         self.selected_region=region_id
         measurements=[m for m in result.measurements if m.region_id==region_id]
-        if self.metric_selector.currentData() in RGB_SHIFT_METRICS:
+        if self.metric_selector.currentData() in RGB_SHIFT_METRICS or self.metric_selector.currentData()=='sharpening_halo_pct':
             measurements=[m for m in self.direction_result(result).measurements if m.region_id==region_id]
         curve_keys={key for m in measurements for key in m.curves}
         if any(m.kind=='usaf_summary' for m in measurements):curve_keys.update({'ctf','ctf_response'})
@@ -853,6 +888,20 @@ class MainWindow(QMainWindow):
         unit_id=region_id.split('-horizontal-summary')[0].split('-vertical-summary')[0].split('-combined-summary')[0]
         record=next((u for u in result.optical_summary['units'] if u['unit_id']==unit_id),None)
         if not record:return
+        if self.metric_selector.currentData()=='sharpening_halo_pct':
+            self.curve.setLogMode(x=False,y=False)
+            direction='vertical' if '-vertical-' in region_id else 'horizontal' if '-horizontal-' in region_id else None
+            records=record.get('sharpening',{}) if direction is None else {ch:r.get('sharpening',{}) for ch,r in record['directions'].get(direction,{}).items()}
+            for ch,rec in records.items():
+                c=rec.get('curve',{})
+                if c.get('x'):self.curve.plot(c['x'],c['y'],pen=pg.mkPen(colors[ch],width=2),name=ch)
+            self.curve.setLabel('bottom','bar periods');self.curve.setLabel('left','input signal')
+            chosen=next((m for m in measurements if m.channel==self.channel.currentText()),None)
+            lines=[unit_id,'低频内部边缘：亮 / 暗光晕相对于局部阶跃高度。','锐化与光学 / 图卡振铃不能仅凭单张图像区分。']
+            if chosen:
+                lines += [f'{METRIC_NAMES.get(k,k)}: {v:.5g} {chosen.units.get(k,"")}' for k,v in chosen.values.items() if isinstance(v,(int,float))]
+                lines += ['状态：'+', '.join(FLAG_NAMES.get(f,f) for f in chosen.flags),measurement_text(result,chosen,'sharpening_halo_pct','%')]
+            self.detail.setPlainText('\n'.join(lines));self.tabs.setCurrentIndex(0);return
         raw=self.curve_selector.currentData()=='ctf';unit=self.unit.currentText()
         dirs=['vertical'] if '-vertical-' in region_id else ['horizontal'] if '-horizontal-' in region_id else ['vertical','horizontal']
         for direction in dirs:
@@ -862,9 +911,11 @@ class MainWindow(QMainWindow):
                 factor=50.8 if unit=='DPI' else 2*result.optical_summary['picture_height_px'] if unit=='LW/PH' else result.optical_summary['picture_height_px'] if unit=='LP/PH' else 1
                 if unit=='DPI':x=[v*50.8 for v in c.get('frequency_lp_mm',[]) if v is not None]
                 elif factor!=1:x=[v*factor for v in x]
-                y=c.get('ctf' if raw else 'envelope',[])
+                y=c.get('ctf',[]) if raw else c.get('ctf_envelope',c.get('envelope',[]))
                 if len(x)!=len(y):continue
-                self.curve.plot(x,y,pen=pg.mkPen(colors[ch],width=2,style=Qt.PenStyle.SolidLine if direction=='vertical' else Qt.PenStyle.DashLine),name=ch+' '+direction)
+                support=c.get('ctf_support',c.get('sequence_valid',[True]*len(y)))
+                y=np.array([np.nan if v is None or (not raw and not valid) else v for v,valid in zip(y,support)],dtype=float)
+                self.curve.plot(x,y,connect='finite',pen=pg.mkPen(colors[ch],width=2,style=Qt.PenStyle.SolidLine if direction=='vertical' else Qt.PenStyle.DashLine),name=ch+' '+direction)
         self.curve.setLogMode(x=True,y=False);self.curve.setLabel('bottom',unit if unit in {'lp/mm','DPI','LW/PH','LP/PH'} else 'cy/px');self.curve.setLabel('left','CTF' if raw else 'CTF / low frequency')
         self.curve.getAxis('bottom').setStyle(maxTextLevel=0)
         chosen=next((m for m in measurements if m.channel==self.channel.currentText()),None)
@@ -873,6 +924,8 @@ class MainWindow(QMainWindow):
             lines += [f'{METRIC_NAMES.get(k,k)}: {v:.5g} {chosen.units.get(k,"")}' for k,v in chosen.values.items() if v is not None and isinstance(v,(float,int)) and (self.professional or k in METRIC_NAMES)]
             lines+=['状态：'+', '.join(FLAG_NAMES.get(f,f) for f in chosen.flags)]
             lines+=['',measurement_text(result,chosen,self.metric_selector.currentData(),self.unit.currentText() if self.metric_selector.currentData() in FREQUENCY_METRICS else None)]
+        if 'ctf' in result.optical_summary.get('definitions',{}):lines+=['CTF 取三黑条之间的内部明暗起伏，排除外侧白底；只在相邻有效频点之间插值。',
+            '剪切频点不参与；后续未剪切连续段仍可提供交点。缺线、信噪比不足或频率断档后停止，已确认分辨率仍要求自低频连续通过。']
         lines+=['低频归一化 CTF 为输入响应；未知曲线、剪切、图卡印刷均影响结果。','CTF 曲线不能直接称为光学 MTF。']
         self.detail.setPlainText('\n'.join(lines));self.tabs.setCurrentIndex(0)
     def table_selected(self,row,col):

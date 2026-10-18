@@ -6,7 +6,7 @@ limits. A referenced standard defines a quantity; it does not endorse our bands.
 from dataclasses import dataclass, asdict
 from .analysis_catalog import METRIC_LABELS
 
-REFERENCE_VERSION = 'MUTEX-reference-1.0'
+REFERENCE_VERSION = 'MUTEX-reference-1.1'
 SOURCES = {
     'sharpness': ('Imatest · Sharpness / frequency units', 'https://www.imatest.com/imaging/sharpness/'),
     'noise': ('Imatest · Noise', 'https://www.imatest.com/imaging/noise/'),
@@ -86,6 +86,11 @@ add('overshoot_pct undershoot_pct', reference='无光晕参考 0%。',
     prerequisites='有效且未剪切的斜边、已知输入曲线；相对于阶跃高度计算。',
     action='查看 ESF / SFR；减少锐化并比较 RAW 或未处理扫描。', mode='low', unit='%', bands=(5.,10.),
     sources=('sharpening','local'))
+add('sharpening_halo_pct',reference='无可检出光晕参考 0%；同时检查 halo_noise_floor_pct 检测下限。',
+    criteria='MUTEX 工程提示：≤ 2% 未见明显光晕；2–5% 留意；> 5% 光晕明显。数值是过冲 / 下冲幅度，不是锐化概率或后期处理强度。',
+    prerequisites='有效斜边或至少两个低频 USAF 元素；连续采样超过噪声检查。剪切可遮蔽光晕，未知曲线只提供输入域结果。',
+    action='查看明暗边缘和 CTF / SFR，比较关闭锐化后的 RAW / 扫描；光学振铃和图卡也可能产生相同迹象。',
+    mode='low',unit='%',bands=(2.,5.),sources=('sharpening','local'))
 add('clipping_fraction', reference='定量测量期望 0；比例单位为 0–1。',
     criteria='按本次 maximum_clip_fraction 排除阈值检查；非零提示信号丢失，不能按图卡黑白面积给整机画质打分。',
     prerequisites='原测量 ROI 的黑白剪切阈值；保留剪切模式只能相对比较。',

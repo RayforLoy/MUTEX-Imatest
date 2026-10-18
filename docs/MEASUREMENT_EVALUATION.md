@@ -18,7 +18,7 @@
 
 HTML 和 PDF 使用同一评价器；旧结果可直接重评，无须重新测量。启用数据附件时，evaluation-results.json / CSV 保存各测点原始数值、单位、评价、限制、参考、标准和规则版本；result.json 的 evaluation_summary 保存本次规则快照。关闭数据附件时仍在报告中嵌入评价。工程提示不是 ISO / EMVA / FADGI 认证。
 
-规则版本：MUTEX-reference-1.0。共 64 个测量项目；另见 [工作台评价](WORKFLOW_EVALUATION.md)。
+规则版本：MUTEX-reference-1.1。共 65 个测量项目；另见 [工作台评价](WORKFLOW_EVALUATION.md)。
 
 ## 全部测量项目
 
@@ -61,6 +61,14 @@ HTML 和 PDF 使用同一评价器；旧结果可直接重评，无须重新测�
 - 适用条件：足够有效频率；容量还需有效噪声参考与线性化。同条件才可比较。
 - 建议：用相同位置的焦位序列或独立基准比较，避免跨图案、跨曝光直接排名。
 - 依据性质：定义 / 理论参考；无统一合格线
+
+### 锐化 / 振铃光晕 % — sharpening_halo_pct
+
+- 参考值：无可检出光晕参考 0%；同时检查 halo_noise_floor_pct 检测下限。
+- 评价标准：MUTEX 工程提示：≤ 2% 未见明显光晕；2–5% 留意；> 5% 光晕明显。数值是过冲 / 下冲幅度，不是锐化概率或后期处理强度。
+- 适用条件：有效斜边或至少两个低频 USAF 元素；连续采样超过噪声检查。剪切可遮蔽光晕，未知曲线只提供输入域结果。
+- 建议：查看明暗边缘和 CTF / SFR，比较关闭锐化后的 RAW / 扫描；光学振铃和图卡也可能产生相同迹象。
+- 依据性质：MUTEX 工程建议（非行业合格线）
 
 ### RGB 位移 R−G — ca_r_g_px
 
@@ -540,9 +548,9 @@ HTML 和 PDF 使用同一评价器；旧结果可直接重评，无须重新测�
 
 - [Imatest · Sharpness / frequency units](https://www.imatest.com/imaging/sharpness/)
 - [Imatest · Information metrics (different capacity models)](https://docs.imatest.com/docs/new-measurements-from-slanted-edges-information-capacity-nps-neq-snri)
+- [Imatest · Sharpening](https://www.imatest.com/imaging/sharpening/)
 - [Imatest · Chromatic aberration (different CA definition)](https://www.imatest.com/imaging/chromatic-aberration/)
 - [OpenCV · Camera calibration](https://docs.opencv.org/4.x/d9/d0c/group__calib3d.html)
-- [Imatest · Sharpening](https://www.imatest.com/imaging/sharpening/)
 - [Imatest · Noise](https://www.imatest.com/imaging/noise/)
 - [ISO/CIE 11664-6:2022 · CIEDE2000 definition](https://www.iso.org/standard/82662.html)
 - [Imatest · Flat field results](https://docs.imatest.com/docs/flatfield-results)

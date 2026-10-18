@@ -32,6 +32,7 @@ def _channel_lines(channel):
     if channel.get('worst') is None and valid:
         lines.append('该项目没有统一的最差方向；请结合定义和逐点结果判断。')
     lines.extend(f'限制：{note}（{count} 点）' for note, count in channel.get('limitations', {}).items())
+    if channel.get('missing_descriptions'):lines.append('未测得原因：'+'；'.join(f'{reason} {count} 点' for reason,count in channel['missing_descriptions'].items()))
     return lines
 
 

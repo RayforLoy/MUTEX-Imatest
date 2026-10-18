@@ -13,6 +13,8 @@ REGION_KINDS.update({"dot", "logf", "flare", "rings"})
 FATAL_FLAGS = {"clipped", "low_contrast", "invalid_edge", "insufficient_samples", "aliasing", "missing_frequency", "unsupported_pattern", "roi_outside", "fit_failed", "missing_reference", "missing_calibration", "registration_failed"}
 FATAL_FLAGS.update({"rgb_alignment_failed","invalid_ctf_reference","insufficient_frequency_samples","template_occluded"})
 FATAL_FLAGS.update({"target_mismatch","star_geometry_invalid"})
+FATAL_FLAGS.update({"bar_geometry_mismatch","ctf_noise_limited"})
+FATAL_FLAGS.update({'outside_image','directional_resolution_incomplete'})
 
 def plain(value):
     if isinstance(value, np.ndarray): return plain(value.tolist())
@@ -128,6 +130,7 @@ class AnalysisResult:
     optical_summary: dict = field(default_factory=dict)
     analysis_summary: dict = field(default_factory=dict)
     evaluation_summary: dict = field(default_factory=dict)
+    diagnostics_summary: dict = field(default_factory=dict)
     def to_dict(self): return plain(asdict(self))
     @classmethod
     def from_dict(cls, data):

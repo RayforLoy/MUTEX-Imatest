@@ -2,11 +2,28 @@ from __future__ import annotations
 from dataclasses import asdict
 from pathlib import Path
 import multiprocessing as mp
-import queue, traceback,uuid,os,shutil
+import queue, traceback,uuid,os,shutil,time,threading
 from PIL import Image
 from .utils import Cancelled,atomic_json
 
 def process_job(payload,output_queue,cancel):
+    from .diagnostics import JobDiagnostics,job_context,background_error
+    from types import SimpleNamespace
+    completion=[]
+    def send(event):
+        if event['type'] in {'done','error','cancelled'}:completion.append(event)
+        else:output_queue.put(event)
+    try:
+        with JobDiagnostics(payload['folder'],job_context(payload),sink=output_queue.put) as journal:
+            _process_job(payload,SimpleNamespace(put=send),cancel,journal)
+        for event in completion:output_queue.put(event)
+    except Exception as exc:
+        try:log=background_error(exc,job_context(payload))
+        except Exception:log='Diagnostic folder could not be written'
+        output_queue.put({'type':'error','message':str(exc),'log':log})
+
+
+def _process_job(payload,output_queue,cancel,journal):
     try:
         import cv2
         cv2.setNumThreads(1)
@@ -16,7 +33,9 @@ def process_job(payload,output_queue,cancel):
         config=AnalysisConfig.from_dict(payload["config"]).validate()
         folder=Path(payload["folder"]);folder.mkdir(parents=True,exist_ok=True)
         def progress(value,message):
-            if not cancel.is_set():output_queue.put({"type":"progress","value":value,"message":message})
+            if not cancel.is_set():
+                journal.progress(value,message)
+                output_queue.put({"type":"progress","value":value,"message":message})
         if payload['action']=='lab':
             from .lab import run_workflow
             run_workflow(payload['spec'],folder,config,cancel,progress)
@@ -95,10 +114,10 @@ def process_job(payload,output_queue,cancel):
                     save_summary(result.analysis_summary,folder)
                 output_queue.put({"type":"done","result":str(target),"preview":str(preview)})
             else:output_queue.put({"type":"done","preview":str(preview),"metadata":asdict(source.metadata)})
-    except Cancelled:output_queue.put({"type":"cancelled"})
+    except Cancelled:
+        journal.cancelled=True;output_queue.put({"type":"cancelled"})
     except Exception as exc:
-        Path(payload["folder"]).mkdir(parents=True,exist_ok=True)
-        (Path(payload["folder"])/"error.log").write_text(traceback.format_exc(),encoding="utf-8")
+        journal.error(exc)
         output_queue.put({"type":"error","message":str(exc),"log":str(Path(payload["folder"])/"error.log")})
 
 from PySide6.QtCore import QObject,Signal,QTimer,QThread
@@ -110,7 +129,7 @@ class WorkerManager(QObject):
         self.context=mp.get_context("spawn");self.pending=[];self.current=None
         self.timer=QTimer(self);self.timer.timeout.connect(self._poll);self.timer.start(80)
     def submit(self,payload):
-        uid=uuid.uuid4().hex;self.pending.append((uid,payload));self._next();return uid
+        uid=uuid.uuid4().hex;payload=dict(payload,job_id=uid);self.pending.append((uid,payload));self._next();return uid
     def _next(self):
         if self.current or not self.pending:return
         uid,payload=self.pending.pop(0)
@@ -133,12 +152,19 @@ class WorkerManager(QObject):
         if not current["process"].is_alive():
             if not current["finished"]:
                 # Queue feeder can lag process termination; a short bounded get resolves the race.
-                try:
-                    event=current["queue"].get(timeout=.1);self.event.emit(current["id"],event)
+                deadline=time.monotonic()+.25
+                while not current['finished'] and time.monotonic()<deadline:
+                    try:event=current['queue'].get(timeout=.02)
+                    except queue.Empty:continue
+                    self.event.emit(current['id'],event)
                     if self.current is not current:return
-                    current["finished"]=event["type"] in {"done","error","cancelled"}
-                except queue.Empty:pass
-                if not current["finished"]:self.event.emit(current["id"],{"type":"error","message":"分析进程已退出，请检查日志或内存预算"})
+                    current['finished']=event['type'] in {'done','error','cancelled'}
+                if not current["finished"]:
+                    if current['cancel'].is_set():self.event.emit(current['id'],{'type':'cancelled'})
+                    else:
+                        from .diagnostics import abnormal_exit
+                        log=abnormal_exit(current['payload'],current['process'].exitcode)
+                        self.event.emit(current["id"],{"type":"error","message":f"分析进程异常退出（代码 {current['process'].exitcode}），请查看完整诊断日志",'log':log})
             current["process"].join(timeout=.1);current["queue"].close()
             self.current=None;self._next()
             if not self.current and not self.pending:self.idle.emit()
@@ -163,10 +189,11 @@ class TileReader(QThread):
     ready=Signal(object)
     error=Signal(str)
     def __init__(self,parent=None):
-        super().__init__(parent);self.requests=queue.Queue();self.stopping=False;self.generation=0
+        super().__init__(parent);self.requests=queue.Queue();self.stopping=False;self.generation=0;self.cancel_event=threading.Event()
     def reset(self,path,config,metadata=None,native_cache=None):
+        self.cancel_event.set();self.cancel_event=threading.Event()
         self.generation+=1
-        self.requests.put(("source",self.generation,path,config,metadata,native_cache))
+        self.requests.put(("source",self.generation,path,config,metadata,native_cache,self.cancel_event))
         return self.generation
     def request(self,generation,key,box,level):
         self.requests.put(("tile",generation,key,box,level))
@@ -181,13 +208,22 @@ class TileReader(QThread):
                 if request[1]!=self.generation:continue
                 if source:source.close()
                 try:
-                    source=ImageSource.from_cached_raw(request[4],request[3],request[5]) if request[5] else ImageSource(request[2],request[3])
+                    source=ImageSource.from_cached_raw(request[4],request[3],request[5]) if request[5] else ImageSource(request[2],request[3],cancel=request[6])
+                    source.cancel=request[6]
                     generation=request[1]
-                except Exception as exc:source=None;self.error.emit(str(exc))
+                except Exception as exc:
+                    if self.stopping or request[1]!=self.generation:continue
+                    from .diagnostics import background_error
+                    log=background_error(exc,{'action':'tile-open','path':request[2]})
+                    source=None;self.error.emit(str(exc)+'；诊断日志：'+log)
             elif source is not None and request[1]==generation==self.generation:
                 _,gen,key,box,level=request
                 try:self.ready.emit({"generation":gen,"key":key,"box":box,"level":level,"pixels":source.tile(*box,level)})
-                except Exception as exc:self.error.emit(str(exc))
+                except Exception as exc:
+                    from .diagnostics import background_error
+                    if self.stopping or request[1]!=self.generation:continue
+                    log=background_error(exc,{'action':'tile-read','path':str(getattr(source,'path','unknown')),'box':box,'level':level})
+                    self.error.emit(str(exc)+'；诊断日志：'+log)
         if source:source.close()
     def close(self):
-        self.stopping=True;self.requests.put(("stop",));self.wait(3000)
+        self.stopping=True;self.cancel_event.set();self.requests.put(("stop",));self.wait(3000)

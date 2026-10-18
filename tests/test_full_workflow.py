@@ -155,6 +155,29 @@ def test_full_result_ui_channel_switch_ctf_and_focus_views(whole_truth,qtbot):
     window.close()
 
 
+def test_whole_ctf_plot_breaks_at_excluded_samples_and_handles_missing_raw_values(whole_truth,qtbot):
+    from mutex_imatest.ui.main_window import MainWindow
+    root,original,rgb,preview=whole_truth
+    result=copy.deepcopy(original)
+    record=result.optical_summary['units'][0]
+    for direction in record['directions'].values():
+        c=direction['R']['curve']
+        c['ctf'][3]=None;c['ctf_envelope'][3]=None;c['ctf_support'][3]=False
+        c['sequence_valid'][3:]=[False]*len(c['sequence_valid'][3:])
+    window=MainWindow();qtbot.addWidget(window);window.persist_preferences=False
+    window.entries=[{'path':result.image.path,'result':result,'metadata':result.image,'preview':str(preview),'config':result.settings}]
+    window.current_index=0;window.display_entry(0)
+    for key in ['ctf','ctf_response']:
+        window.curve_selector.setCurrentIndex(window.curve_selector.findData(key))
+        window.select_region(record['unit_id']+'-combined-summary')
+        r=[p for p in window.curve.listDataItems() if p.name().startswith('R ')]
+        assert len(r)==2
+        for plot in r:
+            x,y=plot.getData()
+            assert np.isnan(y[3]) and np.isfinite(y[4])
+    window.close()
+
+
 def test_imported_result_preserves_host_cache_and_preview_pipeline(whole_truth,qtbot,tmp_path):
     from mutex_imatest.ui.main_window import MainWindow
     root,original,rgb,preview=whole_truth

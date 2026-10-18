@@ -172,6 +172,9 @@ def export_bundle(result,preview,directory,metric="mtf50",channel="G",unit="cy/p
         result.analysis_summary=summarize_selected(result,result.analysis_summary['requested_metrics'],unit)
     folder=Path(directory);folder.mkdir(parents=True,exist_ok=True)
     if include_data:result.save(folder/"result.json");export_csv(result,folder/"measurements.csv")
+    if include_data and result.diagnostics_summary:
+        from .utils import atomic_json
+        atomic_json(folder/'diagnostics-summary.json',result.diagnostics_summary)
     if result.optical_summary:
         from .reports_usaf import export_tables,create_assets,summary_text
         if include_data:

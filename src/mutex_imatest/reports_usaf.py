@@ -33,6 +33,8 @@ def shift_statistics(result):
 def summary_text(result):
     s=result.optical_summary
     lines=[f'整卡原像素多频率分析 · {Path(result.image.path).name}',f"阈值：{s['threshold']:.3g} · {s['threshold_mode']}；双向取较弱方向",'']
+    if 'ctf' in s.get('definitions',{}):lines+=['CTF：三黑条之间两个内部白隙相对相邻黑条的明暗起伏，排除外侧白底；细条纹以局部三像素二次插值减小采样相位误差。',
+        'CTFnn 仅采用相邻有效频点包围的交点。剪切点排除后，后续未剪切连续段仍可测交点；缺线、信噪比不足及频率断档后停止。已确认分辨率仍要求自低频连续通过。','']
     for ch,stats in s['statistics'].items():
         lines.append(CHANNEL_LABELS[ch])
         for key,name in [('resolution_limit_lp_mm','lp/mm'),('resolution_limit_dpi','等效分辨 DPI'),('resolution_limit_lw_ph','LW/PH')]:
@@ -66,8 +68,11 @@ def ctf_svg(record,calibrated=True,raw=False,width=680,height=250):
         dash=' stroke-dasharray="5 3"' if direction=='horizontal' else ''
         parts.append(f'<path d="{path}" fill="none" stroke="{COLORS[ch]}" stroke-width="1.7"{dash}/>')
         if not raw:
-            p=' '.join(f'{X(a):.2f},{Y(b):.2f}' for a,b in zip(x,curve.get('envelope',[])) if a is not None)
-            parts.append(f'<polyline points="{p}" fill="none" stroke="{COLORS[ch]}" opacity="0.25"/>')
+            path='';started=False
+            for a,b,valid in zip(x,curve.get('ctf_envelope',curve.get('envelope',[])),curve.get('ctf_support',curve.get('sequence_valid',[True]*len(x)))):
+                if a is None or b is None or not valid:started=False;continue
+                path+=f'{"L" if started else "M"}{X(a):.2f},{Y(b):.2f} ';started=True
+            parts.append(f'<path d="{path}" fill="none" stroke="{COLORS[ch]}" opacity="0.25"/>')
     parts.append(f'<text x="{left+pw/2-40}" y="{height-7}" font-size="12">{"lp/mm" if calibrated else "cycles/pixel"} (log scale)</text></svg>')
     return ''.join(parts)
 
@@ -113,13 +118,14 @@ def export_tables(result,folder):
             keys=['resolution_limit_lp_mm','resolution_limit_dpi','resolution_limit_lw_ph','resolution_limit_lp_ph','resolution_limit','ctf50_lp_mm','ctf20_lp_mm','ctf10_lp_mm','rgb_shift_x_px','rgb_shift_y_px','sampling_dpi_x','sampling_dpi_y']
             w.writerow([m.region_id,m.direction_deg,m.channel,*m.position,*[m.values.get(k) for k in keys],m.confidence,';'.join(m.flags)])
     with open(folder/'ctf_curves.csv','w',newline='',encoding='utf-8-sig') as f:
-        w=csv.writer(f);w.writerow(['unit','direction','channel','element','frequency_cy_px','frequency_lp_mm','raw_CTF','threshold_response','monotone_envelope','passes'])
+        w=csv.writer(f);w.writerow(['unit','direction','channel','element','frequency_cy_px','frequency_lp_mm','raw_CTF','threshold_response','monotone_envelope','passes','ctf_support','resolution_contiguous_support'])
         for u in result.optical_summary['units']:
             for direction,channels in u['directions'].items():
                 for ch,rec in channels.items():
                     c=rec.get('curve',{})
                     for i,v in enumerate(c.get('frequency',[])):
-                        w.writerow([u['unit_id'],direction,ch,c['element_ids'][i],v,c['frequency_lp_mm'][i],c['ctf'][i],c['response'][i],c['envelope'][i],c['pass'][i]])
+                        support=c.get('ctf_support',c.get('sequence_valid',[True]*len(c['frequency'])))[i]
+                        w.writerow([u['unit_id'],direction,ch,c['element_ids'][i],v,c['frequency_lp_mm'][i],c['ctf'][i],c['response'][i],c.get('ctf_envelope',c['envelope'])[i] if support else None,c['pass'][i],support,c.get('sequence_valid',[True]*len(c['frequency']))[i]])
 
 def _stat_rows(result):
     return [[CHANNEL_LABELS[ch],str(v.get('resolution_limit',{}).get('count',0)),fmt(v.get('resolution_limit_lp_mm',{}).get('max')),fmt(v.get('resolution_limit_dpi',{}).get('max')),fmt(v.get('resolution_limit_lw_ph',{}).get('max')),fmt(v.get('resolution_limit_lp_mm',{}).get('median')),fmt(v.get('resolution_limit_lp_mm',{}).get('p10'))] for ch,v in result.optical_summary['statistics'].items()]

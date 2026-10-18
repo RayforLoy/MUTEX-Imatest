@@ -16,6 +16,7 @@ def metric_availability(chart,result=None,focus=None,configured_channels='G',pla
         for key in keys:available[key]=''
     if kinds:add(['clipping_fraction'])
     if 'edge' in kinds:add(['mtf50','mtf50p','mtf20','mtf10','mtf_nyquist','overshoot_pct','undershoot_pct','edge_fit_rms_px'])
+    if 'edge' in kinds or full:add(['sharpening_halo_pct'])
     for r in regions:
         if r['kind']=='star':
             add(['contrast_at_frequency'])

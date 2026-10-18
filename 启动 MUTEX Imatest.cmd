@@ -2,6 +2,10 @@
 cd /d "%~dp0"
 if exist "MUTEX Imatest.exe" (
   start "" "MUTEX Imatest.exe"
+) else if exist "dist\MUTEX Imatest 0.8.0\MUTEX Imatest.exe" (
+  start "" "dist\MUTEX Imatest 0.8.0\MUTEX Imatest.exe"
+) else if exist "dist\MUTEX Imatest 0.7.4\MUTEX Imatest.exe" (
+  start "" "dist\MUTEX Imatest 0.7.4\MUTEX Imatest.exe"
 ) else if exist "dist\MUTEX Imatest 0.7.3\MUTEX Imatest.exe" (
   start "" "dist\MUTEX Imatest 0.7.3\MUTEX Imatest.exe"
 ) else if exist "dist\MUTEX Imatest\MUTEX Imatest.exe" (

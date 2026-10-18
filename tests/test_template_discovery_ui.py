@@ -150,10 +150,11 @@ def test_prepare_targets_worker_serializes_definition_without_decoding_capture(t
                  'folder':str(folder)},output,SimpleNamespace(is_set=lambda:False))
     events=[]
     while not output.empty():events.append(output.get_nowait())
-    assert len(seen)==1 and [e['type'] for e in events]==['progress','done']
+    assert len(seen)==1 and [e['type'] for e in events if e['type']!='log']==['progress','done']
+    assert {'START','PROGRESS','END'}<={e['stage'] for e in events if e['type']=='log'}
     prepared=load_chart(events[-1]['prepared_chart'])
     assert Path(events[-1]['prepared_chart'])==folder/'prepared-chart.json'
     assert [r.id for r in prepared.regions]==['a-manual','worker-star']
     assert prepared.physical_size_mm==chart.physical_size_mm and prepared.calibrated==chart.calibrated
     assert prepared.source_path==chart.source_path and len(chart.regions)==1
-    assert {p.name for p in folder.iterdir()}=={'prepared-chart.json'}
+    assert {p.name for p in folder.iterdir()}=={'prepared-chart.json','analysis.log','diagnostics.jsonl','native-crash.log'}
