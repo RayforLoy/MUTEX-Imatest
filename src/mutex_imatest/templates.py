@@ -76,8 +76,8 @@ def available_charts():
         if path.suffix.lower() in {".json",".mchart"}:
             try: entries.append((path,load_chart(path)))
             except (ValueError,OSError,KeyError): pass
-    from .chart_library import consolidate_library
-    charts=[builtin_chart()]+consolidate_library(library_dir(),entries)
+    from .chart_library import consolidate_library,update_legacy_display_names
+    charts=update_legacy_display_names([builtin_chart()]+consolidate_library(library_dir(),entries))
     # Public definitions live beside the portable app, independently of the
     # user's private source artwork and recoverable private-library merges.
     from .bundled_templates import bundled_charts

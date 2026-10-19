@@ -50,6 +50,6 @@ GitHub Release 上传 Windows ZIP、完整源码 ZIP、SHA256SUMS.txt 和发布�
 
 ## 随发布包提供全部模板
 
-公开 `template/` 保留 6 套可打印源图和独立许可。授权随软件发布的私有图卡可用 `scripts/build_bundled_templates.py --chart 定义.json --chart 另一份定义.json --out private_assets/bundled_templates` 构建，再使用 `scripts/release.py --zip --require-bundled` 打包。
+公开 `template/` 保留 6 套可打印源图和独立许可。授权随软件发布的三套私有图卡（120、135、星图 + ISO12233）可用 `scripts/build_bundled_templates.py --chart 120.json --chart 135.json --chart 混合图卡.json --out private_assets/bundled_templates` 构建，再使用 `scripts/release.py --zip --require-bundled` 打包。完整发布包共 10 套模板；构建验收依据输入清单检查实际数量。
 
 构建只保留测量定义和 PNG 配准参考，用 `.mxasset` 二进制容器分发；不装入私有 SVG/PDF。容器使用公开应用加载口令，支持离线免输入使用，因此不声称隐藏可测量的几何或栅格数据；用户自行导出的 `.mxtpl` 仍使用用户自己的秘密口令，不受此加载口令影响。模板作品版权与代码 GPL 分开。Git 仓库不含私有作品；完整源码 ZIP、Windows ZIP 和单独模板 ZIP 包含这些可用资产。

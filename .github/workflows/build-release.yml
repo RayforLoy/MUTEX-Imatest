@@ -6,7 +6,7 @@ on:
       tag:
         description: Existing draft release tag
         required: true
-        default: v0.9.0
+        default: v0.9.1
       source_sha256:
         description: SHA-256 of the complete source ZIP already on the draft
         required: true
@@ -127,7 +127,7 @@ jobs:
           tests=ET.parse('validation/pytest.xml').getroot().find('testsuite')
           assert int(tests.get('tests'))==expected_tests and all(int(tests.get(k))==0 for k in ['failures','errors','skipped'])
           gui=read('validation/packaged-selftest-final/selftest.json')
-          assert gui['passed'] and not gui['errors'] and gui['templates']['total']==9
+          assert gui['passed'] and not gui['errors'] and gui['templates']['total']==int(previous['expected_templates'])
           cli=read('validation/iq-packaged/verification.json');assert cli['all_passed']
           formats=read('validation/slim-runtime/verification.json');assert formats['passed']
           assert read('validation/report-export/verification.json')['passed']
@@ -136,6 +136,7 @@ jobs:
           build=read('validation/iq-build/verification.json');assert build['stable_sources'] and build['returncode']==0
           result={'version':os.environ['RELEASE_TAG'][1:],'source_commit':previous['source_commit'],
             'input_source_zip_sha256':os.environ['SOURCE_SHA256'],'github_actions_run':os.environ['GITHUB_RUN_ID'],
+            'expected_templates':int(previous['expected_templates']),
             'pytest':{'passed':expected_tests,'failed':0,'skipped':0},'source_stable_during_build':True,
             'gui_exe_sha256':build['exe_sha256'],'cli_exe_sha256':cli['exe_sha256'],
             'packaged_gui_selftest':True,'packaged_cli_checks':len(cli['checks']),'codec_checks':formats['checks'],
@@ -148,6 +149,8 @@ jobs:
           if local_tiff:
               result['native_tiff_local_reference']=dict(local_tiff,
                 scope='Private TIFF checked locally with the source CLI and the exact analysis source snapshot recorded in this build. Downloaded binaries require a separate local acceptance check before publication; private inputs were not uploaded or rerun on CI.')
+          for key in ['template_workflow_local_reference','old_template_rename_check']:
+              if previous.get(key):result[key]=previous[key]
           Path('validation/release-checks.json').write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding='utf-8')
       - name: Package both complete formats with every template
         working-directory: source-tree

@@ -34,16 +34,16 @@
 
 ## 下载与运行
 
-前往 [GitHub Releases](https://github.com/RayforLoy/MUTEX-Imatest/releases/latest) 获取便携版。当前发布版本为 **v0.9.0**，验证环境为 **Windows 11 x64**。
+前往 [GitHub Releases](https://github.com/RayforLoy/MUTEX-Imatest/releases/latest) 获取便携版。当前发布版本为 **v0.9.1**，验证环境为 **Windows 11 x64**。
 
-v0.9.0 增加跟随系统的中英文界面、浅色 / 深色主题及显示、编辑、设置菜单；测点悬停和明细提供具体失败原因，成功分析检测到锐化迹象时弹出批次汇总。USAF 新增保守的窄浅污染候选核验，修复纤维被误数为第四条线导致的异常低值，保留原始剖面和污染警告。旧结果需要重新分析才能获得修正后的测量。
+v0.9.1 新增「调焦卡_135x1」，原「调焦卡_x1」更名为「调焦卡_120x1」并保留旧 ID 与会话关联。135 模板包含 276 个 USAF 单元和 19320 个双向频点区域；完整发布包共 10 套模板。导入支持较大的 SVG 和不含 0 组的缩小图卡，继续核验三线几何，默认未确认实物标定。中英文、深浅主题、质量原因与锐化提醒继续提供。
 
 | 文件 | 用途 |
 | --- | --- |
-| [Windows x64 · 7z](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.9.0/MUTEX-Imatest-0.9.0-windows-x64.7z) | 体积更小，使用兼容 7z 的工具解压 |
-| [Windows x64 · ZIP](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.9.0/MUTEX-Imatest-0.9.0-windows-x64.zip) | 可使用 Windows 自带功能解压 |
-| [完整模板包](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.9.0/MUTEX-Imatest-0.9.0-templates.zip) | 单独获取全部 9 套模板；便携版已包含 |
-| [完整源码包](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.9.0/MUTEX-Imatest-0.9.0-source.zip) | 源码、全部模板资产及对应 LibRaw 原始发行包 |
+| [Windows x64 · 7z](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.9.1/MUTEX-Imatest-0.9.1-windows-x64.7z) | 体积更小，使用兼容 7z 的工具解压 |
+| [Windows x64 · ZIP](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.9.1/MUTEX-Imatest-0.9.1-windows-x64.zip) | 可使用 Windows 自带功能解压 |
+| [完整模板包](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.9.1/MUTEX-Imatest-0.9.1-templates.zip) | 单独获取全部 10 套模板；便携版已包含 |
+| [完整源码包](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.9.1/MUTEX-Imatest-0.9.1-source.zip) | 源码、全部模板资产及对应 LibRaw 原始发行包 |
 
 1. 下载任一 **Windows x64** 包，完整解压到可写目录。
 2. 双击目录中的 **`MUTEX Imatest.exe`**。无需另行安装 Python。
@@ -51,7 +51,7 @@ v0.9.0 增加跟随系统的中英文界面、浅色 / 深色主题及显示、�
 
 两个 Windows 包的内容一致，均包含 GUI、`MUTEX-CLI.exe`、全部模板、文档及许可证。请保留 `_internal` 和其余文件，直接运行解压目录中的程序；`build/` 是开发时的中间产物目录。
 
-校验文件见 [SHA256SUMS.txt](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.9.0/SHA256SUMS.txt)，大小与哈希清单见 [release-manifest.json](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.9.0/release-manifest.json)。PowerShell 可用 `Get-FileHash .\下载文件名 -Algorithm SHA256` 核对。
+校验文件见 [SHA256SUMS.txt](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.9.1/SHA256SUMS.txt)，大小与哈希清单见 [release-manifest.json](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.9.1/release-manifest.json)。PowerShell 可用 `Get-FileHash .\下载文件名 -Algorithm SHA256` 核对。
 
 ## 快速开始
 
@@ -109,19 +109,19 @@ v0.9.0 增加跟随系统的中英文界面、浅色 / 深色主题及显示、�
 
 ## 图卡模板
 
-**完整发布包可离线直接选择全部 9 套模板**，无需另外提供原图卡文件。
+**完整发布包可离线直接选择全部 10 套模板**，无需另外提供原图卡文件。
 
 | 来源 | 模板 | 分发方式 |
 | --- | --- | --- |
 | 内置验证卡 · 1 套 | 合成斜边 / 星图 / USAF 多目标卡及焦位示例 | 随代码与便携版提供，用于验证流程 |
 | 公开图卡 · 6 套 | 通用西门子星 / 斜边、双方向斜边网格、ISO 12233 风格兼容图、9×7 内角点棋盘格、Wimmer 星图、Setreset USAF 1951 | `template/` 提供 SVG / PDF、测量定义、预览与独立许可 |
-| 授权图卡 · 2 套 | 调焦卡_x1；西门子星图 + ISO12233 0.5× · 整卡 / 局部 | 发布包附 `.mxasset` 测量几何与栅格参考，原 SVG / PDF 不进入分发 |
+| 授权图卡 · 3 套 | 调焦卡_120x1；调焦卡_135x1；西门子星图 + ISO12233 0.5× · 整卡 / 局部 | 发布包附 `.mxasset` 测量几何与栅格参考，原 SVG / PDF 不进入分发 |
 
 公开库中 4 套原创图卡采用 **CC0**，2 套衍生图卡采用 **CC BY-SA 3.0**。ISO 12233 风格图卡是原创工程兼容图。打印时使用原尺寸，并核对实物检查线；设计尺寸默认未标定。下载、打印与署名见 [公开模板库](template/README.md) 和 [来源与许可](template/ATTRIBUTION.md)。
 
 自己的图卡可通过 **「图卡模板」** 管理、导入、复制、改名、归档和导出。新导出的 **`.mxtpl`** 为 ZIP 容器，使用 Scrypt + AES-256-GCM 口令加密，只保存测量定义、缩略图与栅格参考，**不含原 SVG / PDF 矢量文件**。旧 `.mchart` 可读取，属于未加密兼容格式。
 
-Git 仓库仅包含内置验证卡及公开图卡。两套授权图卡资产随 Windows、完整源码与模板 Release 包提供，作品版权单独保留；`.mxasset` 的公开加载机制用于离线使用，不构成保密或 DRM 边界。详见 [图卡资产与开源边界](docs/ASSET_PACKS.md) 及 [构建指南](docs/BUILDING.md#随发布包提供全部模板)。
+Git 仓库仅包含内置验证卡及公开图卡。三套授权图卡资产随 Windows、完整源码与模板 Release 包提供，作品版权单独保留；`.mxasset` 的公开加载机制用于离线使用，不构成保密或 DRM 边界。详见 [图卡资产与开源边界](docs/ASSET_PACKS.md) 及 [构建指南](docs/BUILDING.md#随发布包提供全部模板)。
 
 局部拍摄仅分析实际可见区域；采用通用检测且无法对应参考图时，清除预设物理标定。棋盘格角点残差要求完整棋盘，真实镜头内参需要多姿态图像。见 [混合图卡与局部拍摄](docs/MIXED_TARGETS.md)。
 
@@ -158,7 +158,7 @@ py -3.12 -m venv .venv
 
 锁文件包含本项目的可编辑安装及开发 / 报告依赖。`upgrade_libraw.py` 获取官方 LibRaw 0.22.2 发行包、检查符号并替换当前虚拟环境的 DLL；重装 rawpy 后应重跑升级与 RAW 验收。依赖下载完成后，日常分析可离线运行。
 
-Git 克隆不含两套授权图卡的派生资产；如需与便携版相同的完整模板集，使用完整源码 Release 包。私有原图卡不会随任何源码包提供。
+Git 克隆不含三套授权图卡的派生资产；如需与便携版相同的完整模板集，使用完整源码 Release 包。私有原图卡不会随任何源码包提供。
 
 ### 命令行
 
@@ -179,7 +179,7 @@ Git 克隆不含两套授权图卡的派生资产；如需与便携版相同的�
 
 ### 验证与打包
 
-v0.9.0 的 **438 项自动测试**覆盖数值真值、无效数据、条纹污染反例、锐化提醒、质量原因、中英文切换与主题，以及错误诊断。[Windows 构建记录](https://github.com/RayforLoy/MUTEX-Imatest/actions/workflows/build-release.yml) 保留冻结版 GUI / CLI、HTML / PDF、全部模板和格式验收流程；其工作流为手动触发发布构建。另有 8 份固定版本的官方公开示例跑通检查，此验证不等于商业软件数值等价。实际 4.23 GB TIFF 在严格与相对调焦策略下均完成本地回归；既有 999.tif 和手机局部图卡记录的版本与范围见验证文档，私有输入不上传云端。
+v0.9.1 的 **445 项自动测试**覆盖数值真值、无效数据、条纹污染反例、锐化提醒、质量原因、中英文切换与主题，以及大 SVG、非零起始频率、旧模板关联和缓存边界。[Windows 构建记录](https://github.com/RayforLoy/MUTEX-Imatest/actions/workflows/build-release.yml) 保留冻结版 GUI / CLI、HTML / PDF、全部模板和格式验收流程；其工作流为手动触发发布构建。另有 8 份固定版本的官方公开示例跑通检查，此验证不等于商业软件数值等价。实际 4.23 GB TIFF 在严格与相对调焦策略下均完成本地回归；既有 999.tif 和手机局部图卡记录的版本与范围见验证文档，私有输入不上传云端。
 
 ```powershell
 .\.venv\Scripts\python.exe -m pytest --junitxml=validation/pytest.xml

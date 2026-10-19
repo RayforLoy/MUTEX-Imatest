@@ -52,6 +52,18 @@ def test_different_calibrations_pages_and_deliberate_names_are_not_merged(tmp_pa
     assert len(consolidate([a,b]))==2
 
 
+def test_120_card_rename_preserves_custom_names_identifiers_and_geometry():
+    from mutex_imatest.chart_library import update_legacy_display_names
+    identifier='42f8e65ab1a94dfb82825b7bd07a2187'
+    region=Region('r','usaf',(.1,.1,.2,.2))
+    old=ChartDefinition(identifier,'调焦卡_x1',[region],aliases=['older-card'])
+    custom=ChartDefinition(identifier,'My calibration',[copy.deepcopy(region)])
+    independent=ChartDefinition('user-copy','调焦卡_x1',[copy.deepcopy(region)])
+    values=update_legacy_display_names([old,custom,independent])
+    assert [c.name for c in values]==['调焦卡_120x1','My calibration','调焦卡_x1']
+    assert old.id==identifier and old.aliases==['older-card'] and old.regions==[region]
+
+
 def shift_result():
     regions=[Region('x','usaf',(.1,.1,.1,.1),params={'multi_frequency':True,'unit_id':'u','group':0,'element':1})]
     chart=ChartDefinition('whole','whole',regions)

@@ -230,6 +230,15 @@ def test_existing_corrupt_cache_is_reported_without_overwriting(chart,tmp_path,q
     assert Path(loaded.preview).read_bytes()==b"corrupt existing reference"
 
 
+def test_cache_rejects_temporary_directory_outside_selected_root(chart,tmp_path,qapp,monkeypatch):
+    target=package.export_chart_package(chart,tmp_path/'new.mxtpl',PASSWORD)
+    foreign=tmp_path/'foreign';foreign.mkdir();marker=foreign/'keep.txt';marker.write_bytes(b'keep')
+    monkeypatch.setattr(package.tempfile,'mkdtemp',lambda **kwargs:str(foreign))
+    with pytest.raises(package.ChartPackageError,match='缓存路径'):
+        package.load_chart_package(target,PASSWORD,tmp_path/'cache')
+    assert marker.read_bytes()==b'keep' and list(foreign.iterdir())==[marker]
+
+
 def test_vector_usaf_product_engine_is_unchanged_after_source_free_roundtrip(tmp_path,qapp):
     from test_vector_usaf import make_vector
     from mutex_imatest.vector_usaf import detect_svg_usaf

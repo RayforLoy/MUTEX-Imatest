@@ -16,8 +16,6 @@ def detect_svg_usaf(path, group=3, element=5, directions="both",all_frequencies=
         raise ValueError("Invalid USAF directions")
     source_text, tree = read_svg(path)
     view, size = svg_dimensions(tree)
-    if any("transform" in n.attrib for n in tree.iter()):
-        raise ValueError("USAF 矢量识别暂需展开 SVG 的 transform；仍可手工添加测量区域")
     vx, vy, vw, vh = view
     mm_x, mm_y = size[0]/vw, size[1]/vh
     styles = {}
@@ -26,6 +24,7 @@ def detect_svg_usaf(path, group=3, element=5, directions="both",all_frequencies=
             for cls, body in re.findall(r"\.([\w-]+)\s*\{([^}]+)\}", "".join(node.itertext())):
                 styles[cls] = dict(p.split(":",1) for p in body.split(";") if ":" in p)
     def rectangle(node):
+        if 'transform' in node.attrib:return None
         style = {}
         for cls in node.attrib.get("class","").split():
             style.update(styles.get(cls,{}))
@@ -50,13 +49,23 @@ def detect_svg_usaf(path, group=3, element=5, directions="both",all_frequencies=
         if min(w,h) <= 0 or not 4.7 < max(w,h)/min(w,h) < 5.3:
             return None
         vertical = h>w
-        frequency = 1/(2*(w*mm_x if vertical else h*mm_y))
+        # The five-width long side is less sensitive to export rounding than
+        # sub-unit bar widths, especially on a reduced, dense chart.
+        frequency = 2.5/(h*mm_y if vertical else w*mm_x)
         k = round(6*math.log2(frequency))
         if not -12 <= k <= 53 or abs(frequency/2**(k/6)-1) > .025:
             return None
         return {"box":(x,y,w,h),"center":np.array([x+w/2,y+h/2]),"vertical":vertical,"k":k}
     units=[]
-    for parent in tree.iter():
+    # A decorative transformed object must not disable otherwise usable bars.
+    # Coordinates inside transformed subtrees are not document coordinates, so
+    # exclude those branches rather than silently assigning incorrect ROIs.
+    untransformed=[];pending=[tree]
+    while pending:
+        node=pending.pop()
+        if 'transform' in node.attrib:continue
+        untransformed.append(node);pending.extend(reversed(list(node)))
+    for parent in untransformed:
         if parent.tag.rsplit("}",1)[-1] != "g":
             continue
         by_key=defaultdict(list)
@@ -76,15 +85,18 @@ def detect_svg_usaf(path, group=3, element=5, directions="both",all_frequencies=
                 if period<=0 or max(abs(gaps-period))>.035*period or abs(period/(2*minor)-1)>.035 or np.ptp(centers[:,cross])>.06*period:
                     continue
                 triplets.append({"k":k,"direction":"vertical" if vertical else "horizontal", "center":centers.mean(axis=0),"period":period})
-        if any(t["k"]==0 for t in triplets) and len(triplets)>=12:
+        common=({t['k'] for t in triplets if t['direction']=='vertical'} &
+                {t['k'] for t in triplets if t['direction']=='horizontal'})
+        if len(triplets)>=12 and any(all(k+i in common for i in range(6)) for k in common):
             units.append(triplets)
     regions=[];fiducials=[]
     target_k=6*group+element-1
     for index,triplets in enumerate(units):
         unit=f"svg-usaf-{index+1:03}"
+        first_k=min(t['k'] for t in triplets)
         for t in triplets:
             x,y=t["center"];p=t["period"]
-            if 0<=t["k"]<=17:
+            if first_k<=t["k"]<=first_k+17:
                 fiducials.append({"kind":"usaf","unit_id":unit,"k":t["k"],"direction":t["direction"],
                                   "position":[(x-vx)/vw,(y-vy)/vh],"period_normalized":[p/vw,p/vh]})
             if (not all_frequencies and t["k"]!=target_k) or directions not in {"both",t["direction"]}:
@@ -122,8 +134,10 @@ def _reference_bands(source_text,view,regions):
     ensure_qt();renderer=QSvgRenderer(QByteArray(source_text.encode()))
     units=defaultdict(list)
     for r in regions:
-        if r.params['frequency_index']<=17:units[r.params['unit_id']].append(r)
+        units[r.params['unit_id']].append(r)
     for rows in units.values():
+        first_k=min(r.params['frequency_index'] for r in rows)
+        rows=[r for r in rows if r.params['frequency_index']<=first_k+17]
         lo=np.min([r.box[:2] for r in rows],axis=0)
         hi=np.max([[r.box[0]+r.box[2],r.box[1]+r.box[3]] for r in rows],axis=0)
         extent=(hi-lo)*np.array(view[2:]);s=1400/max(extent)

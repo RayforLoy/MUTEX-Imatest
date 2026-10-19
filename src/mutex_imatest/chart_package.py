@@ -470,8 +470,11 @@ def _cache_images(root, reference, thumbnail):
                 raise ChartPackageError("同名模板缓存内容损坏，请清理后重新导入")
         return destination/"reference.png"
     if destination.exists() or destination.is_symlink():return existing()
-    temporary=Path(tempfile.mkdtemp(prefix=".mxtpl-",dir=root)).resolve()
-    if not temporary.is_relative_to(root):raise ChartPackageError("模板缓存路径无效")
+    # mkdtemp creates a fresh direct child. Keep its logical path: Windows
+    # packaged hosts can redirect only the new child into LocalCache, while
+    # resolving an existing parent still returns the original AppData path.
+    temporary=Path(tempfile.mkdtemp(prefix=".mxtpl-",dir=root)).absolute()
+    if temporary.parent!=root or temporary.is_symlink():raise ChartPackageError("模板缓存路径无效")
     try:
         for name,content in expected.items():
             with (temporary/name).open("xb") as stream:stream.write(content)

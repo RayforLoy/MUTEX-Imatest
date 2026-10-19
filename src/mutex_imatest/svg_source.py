@@ -4,12 +4,18 @@ from pathlib import Path
 import re
 import xml.etree.ElementTree as ET
 
+MAX_SVG_SOURCE_BYTES = 64*2**20
+
 
 def read_svg(path):
     path = Path(path)
-    if path.stat().st_size > 16*2**20:
-        raise ValueError("SVG source limit is 16 MiB")
-    text = path.read_text(encoding="utf-8-sig")
+    if path.stat().st_size > MAX_SVG_SOURCE_BYTES:
+        raise ValueError("SVG source limit is 64 MiB")
+    with path.open('rb') as stream:
+        data = stream.read(MAX_SVG_SOURCE_BYTES+1)
+    if len(data) > MAX_SVG_SOURCE_BYTES:
+        raise ValueError("SVG source limit is 64 MiB")
+    text = data.decode('utf-8-sig')
     # CorelDRAW/Illustrator commonly write this harmless standard declaration.
     # Drop it before parsing/rendering; never fetch the external DTD. Internal
     # subsets, custom declarations and entity definitions remain disallowed.

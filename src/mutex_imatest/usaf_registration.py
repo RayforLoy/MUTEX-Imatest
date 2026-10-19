@@ -76,7 +76,11 @@ def _global_oriented(chart,source,preview,quarter_turns):
         atomic_json(config_path,debug)
     config_path=source.config.cache_path()/f"usaf-registration-{source.fingerprint[:12]}-q{quarter_turns}.json"
     debug={"preview_quarter_turns":quarter_turns}
-    anchors=np.array([f["position"] for f in chart.fiducials if f.get("kind")=="usaf" and f["k"]==0 and f["direction"]=="vertical"])
+    vertical=[f for f in chart.fiducials if f.get('kind')=='usaf' and f['direction']=='vertical']
+    if not vertical:raise ValueError("USAF 配准缺少竖线参考；可使用四点配准")
+    first_k=min(f['k'] for f in vertical)
+    anchors=np.array([f['position'] for f in vertical if f['k']==first_k])
+    debug['anchor_frequency_index']=first_k
     if len(anchors)<6:raise ValueError("USAF 配准需要至少 6 个重复单元；可使用四点配准")
     count=len(np.unique(np.round(anchors[:,0],3)))
     if not 2<=count<=8:raise ValueError("USAF 自动配准暂需 2-8 列重复单元；可使用四点配准")
@@ -201,8 +205,17 @@ def _global(chart,source,preview):
 
 
 def register_usaf(chart,source,config):
-    preview=_gray(source.preview(4096))
+    vertical=[f for f in chart.fiducials if f.get('kind')=='usaf' and f.get('direction')=='vertical']
+    first_k=min((f['k'] for f in vertical),default=0)
+    coarse=[f for f in vertical if f['k']==first_k]
+    # Dense strips can lose their coarsest bars to preview sampling. Use a
+    # larger localization preview only when the template predicts <6 pixels
+    # per coarse period on its long axis; measurement still reads native ROIs.
+    period=min(np.median([f['period_normalized'][axis] for f in coarse]) for axis in [0,1]) if coarse else 1
+    side=8192 if period*4096<6 else 4096
+    preview=_gray(source.preview(side))
     H,status=_global(chart,source,preview)
+    status['localization_preview_size']=[int(preview.shape[1]),int(preview.shape[0])]
     groups=defaultdict(list)
     for f in chart.fiducials:
         if f.get("kind")=="usaf":groups[f["unit_id"]].append(f)
@@ -214,7 +227,9 @@ def register_usaf(chart,source,config):
         locations=_project([f["position"] for f in fiducials],H)
         inside=np.all((locations>=[0,0])&(locations<[source.metadata.width,source.metadata.height]),axis=1)
         diagnostic=diagnostics[unit]={'status':'insufficient_matches','visible_fiducials':int(inside.sum()),'total_fiducials':len(fiducials)}
-        first=next(f for f in fiducials if f["k"]==0 and f["direction"]=="vertical")
+        vertical=[f for f in fiducials if f['direction']=='vertical']
+        if not vertical:continue
+        first=min(vertical,key=lambda f:f['k'])
         point=np.array(first["position"])
         p0=float(np.linalg.norm(_project([point,point+[first["period_normalized"][0],0]],H)[1]-_project([point],H)[0]))
         lo=np.maximum(np.floor(locations.min(axis=0)-2*p0),0).astype(int)

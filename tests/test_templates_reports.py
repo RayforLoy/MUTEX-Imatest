@@ -21,6 +21,21 @@ def test_svg_external_resources_rejected(tmp_path,qapp):
     path=tmp_path/"bad.svg";path.write_text('<svg xmlns="http://www.w3.org/2000/svg"><image href="https://example.com/private.png"/></svg>')
     with pytest.raises(ValueError,match="external"):render_source(path)
 
+
+def test_svg_source_above_previous_limit_is_supported(tmp_path):
+    from mutex_imatest.svg_source import read_svg
+    svg=tmp_path/'dense.svg'
+    svg.write_text('<svg xmlns="http://www.w3.org/2000/svg"><!--'+' '*(17*2**20)+'--></svg>',encoding='utf-8')
+    text,tree=read_svg(svg)
+    assert len(text)>16*2**20 and tree.tag.endswith('svg')
+
+
+def test_svg_source_keeps_a_bounded_file_limit(tmp_path):
+    from mutex_imatest.svg_source import read_svg,MAX_SVG_SOURCE_BYTES
+    svg=tmp_path/'too-large.svg'
+    with svg.open('wb') as stream:stream.truncate(MAX_SVG_SOURCE_BYTES+1)
+    with pytest.raises(ValueError,match='64 MiB'):read_svg(svg)
+
 def test_coreldraw_standard_doctype_is_inert_and_local_css_works(tmp_path,qapp):
     svg=tmp_path/"corel.svg"
     svg.write_text('''<?xml version="1.0" encoding="UTF-8"?>

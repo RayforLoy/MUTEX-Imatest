@@ -18,6 +18,15 @@ def family_key(chart):
 def recognizes(chart,identifier):return identifier==chart.id or identifier in chart.aliases
 
 
+def update_legacy_display_names(charts):
+    """Rename the shipped 120 card while preserving custom names and IDs."""
+    legacy='42f8e65ab1a94dfb82825b7bd07a2187'
+    for chart in charts:
+        if legacy in {chart.id,*chart.aliases} and chart.name=='调焦卡_x1':
+            chart.name='调焦卡_120x1'
+    return charts
+
+
 def merge_charts(charts):
     if len(charts)==1:return copy.deepcopy(charts[0])
     def score(c):return (sum(bool(r.params.get('multi_frequency')) for r in c.regions),len(c.regions),c.calibrated,len(c.fiducials))
