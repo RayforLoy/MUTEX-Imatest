@@ -15,6 +15,8 @@ from ..resolution import FREQUENCY_METRICS
 
 
 def reference_html(key, reference=None, evaluation=None):
+    from .i18n import current_language
+    if current_language()=='en':return english_reference_html(key,reference,evaluation)
     esc=lambda value:html.escape(str(value),quote=True)
     ref=reference or reference_for(key)
     sections=[f'<h3>{esc(ref["name"])}</h3>']
@@ -27,6 +29,59 @@ def reference_html(key, reference=None, evaluation=None):
     for source in ref['sources']:
         title=esc(source['title']);url=esc(source['url'])
         sections.append(f'<p><a href="{url}">{title}</a></p>' if url else '<p>'+title+'</p>')
+    return ''.join(sections)
+
+
+def english_channel_text(evaluation):
+    from .i18n import tr
+    label=tr(evaluation.get('label',''),'en')
+    lines=[f"{label}: {evaluation.get('valid',0)}/{evaluation.get('total',0)} valid measurements."]
+    if evaluation.get('median') is not None:
+        lines.append(f"Median {evaluation['median']:.6g}; range {evaluation['min']:.6g}–{evaluation['max']:.6g} {evaluation['unit']}; valid coverage {evaluation.get('coverage_pct',0):.1f}%.")
+    status=evaluation.get('status')
+    if status=='informational':lines.append('Compare only matching patterns, methods, channels and directions; this is not an absolute equipment grade.')
+    elif status in {'good','watch','poor'}:lines.append('MUTEX engineering guidance is a project suggestion, not an industry acceptance criterion.')
+    elif status in {'pass','fail'}:lines.append('This assessment applies only to the explicitly configured user target.')
+    elif status=='needs_target':lines.append('Set a unit-bearing acceptance target for your application; no universal passing value is assumed.')
+    from ..analysis_audit import reason_description
+    for code,count in evaluation.get('missing_reasons',{}).items():lines.append(f"Missing: {reason_description(code,'en')} ({count}).")
+    for text,count in evaluation.get('limitations',{}).items():lines.append(f"Limitation: {tr(text,'en')} ({count}).")
+    return '\n'.join(lines)
+
+
+def english_reference_summary(key,reference=None):
+    ref=reference or reference_for(key);bands=ref.get('bands');unit=ref.get('unit','')
+    if ref.get('goal'):
+        goal=ref['goal'];bounds=[]
+        if 'min' in goal:bounds.append(f"≥ {goal['min']:.6g}")
+        if 'max' in goal:bounds.append(f"≤ {goal['max']:.6g}")
+        target_unit=ref.get('goal_unit') or (goal.get('unit') if goal.get('unit')!='native' else unit) or unit
+        return 'User target: '+('|value| ' if goal.get('absolute',ref.get('absolute',False)) else '')+' and '.join(bounds)+' '+target_unit+'. Each valid measurement is checked; missing or limited data cannot establish an overall pass.'
+    if bands:
+        good,watch=bands;symbol='≥' if ref.get('mode')=='high' else '≤'
+        quantity='|value|' if ref.get('absolute') else '|value − 100|' if ref.get('mode')=='distance100' else 'value'
+        return f'MUTEX guidance: {quantity} {symbol} {good:g} {unit} good; {symbol} {watch:g} {unit} watch; otherwise review. Not an industry pass/fail limit.'
+    if key in FREQUENCY_METRICS:return 'Nyquist reference: 0.5 cy/px. Response thresholds define the metric; they are not acceptance limits.'
+    if key=='clipping_fraction':return 'Unclipped reference: 0 (ratio 0–1). The configured maximum_clip_fraction determines rejection.'
+    return 'No universal acceptance limit. Compare like-for-like measurements or configure an explicit user target.'
+
+
+def english_reference_html(key,reference=None,evaluation=None):
+    from .i18n import metric_label,metric_description,tr
+    esc=lambda value:html.escape(str(value),quote=True)
+    ref=reference or reference_for(key)
+    sections=[f'<h3>{esc(metric_label(key,"en"))}</h3>']
+    if evaluation:sections.append('<p><b>'+esc(tr(evaluation['label'],'en'))+'</b></p><p>'+esc(english_channel_text(evaluation)).replace('\n','<br>')+'</p>')
+    sections.extend([
+        '<p><b>Reference</b><br>'+esc(english_reference_summary(key,ref))+'</p>',
+        '<p><b>Method and prerequisites</b><br>'+esc(metric_description(key,'en'))+'</p>',
+        '<p><b>Assessment criteria</b><br>Check measurement validity first. Compare the same pattern, method, channel and direction. Missing values are not zero; chart-limited results are measured lower bounds. Engineering bands are project guidance. A user-defined target takes precedence.</p>',
+        '<p><b>Recommended checks</b><br>Inspect native-pixel profiles, registration, clipping, input transfer, aliasing and calibration. Use sufficient response coverage and a focus sequence when an axial optimum is required.</p>',
+        '<p>Unknown transfer functions give input-signal response. Square-wave CTF and sinusoidal MTF must be interpreted separately. Physical units require appropriate calibration. These results do not establish ISO, FADGI or manufacturer certification.</p>',
+        '<p>Rule version: '+esc(REFERENCE_VERSION)+'</p><p><b>Definition sources</b></p>'])
+    for source in ref.get('sources',[]):
+        title='MUTEX · Project measurement definitions and engineering guidance' if source['title'].startswith('MUTEX') else source['title']
+        sections.append(f'<p><a href="{esc(source["url"])}">{esc(title)}</a></p>' if source.get('url') else '<p>'+esc(title)+'</p>')
     return ''.join(sections)
 
 
@@ -49,6 +104,8 @@ class GoalNumber(QLineEdit):
 
 
 class EvaluationDialog(QDialog):
+    def retranslate_ui(self):
+        if self._key:self.reference.setHtml(reference_html(self._key))
     def __init__(self,config,key=None,parent=None):
         super().__init__(parent);self.setWindowTitle('评价参考与自定义目标');self.resize(880,760)
         self.limits=copy.deepcopy(config.evaluation_limits);self._key=None;self._loading=False

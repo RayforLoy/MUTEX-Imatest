@@ -27,11 +27,15 @@ def summarize_selected(result,metrics=None,unit=None):
                              'mean':float(np.mean(values)) if values else None,'min':float(min(values)) if values else None,
                              'max':float(max(values)) if values else None,
                              'flags':dict(Counter(flag for m in selected for flag in m.flags))})
-            from .analysis_audit import reason_for,REASONS
-            missing=Counter(reason_for(result,m,key) if metric_value(result,m,key,display_unit) is None or not m.valid else 'low_confidence'
+            from .analysis_audit import reason_for,reason_codes,reason_text,REASONS
+            missing=Counter(reason_for(result,m,key,display_unit) if metric_value(result,m,key,display_unit) is None or not m.valid else 'low_confidence'
                             for m in selected if not (m.valid and m.confidence>.05 and metric_value(result,m,key,display_unit) is not None))
             channels[-1]['missing_reasons']=dict(missing)
             channels[-1]['missing_descriptions']={REASONS.get(k,k):v for k,v in missing.items()}
+            channels[-1]['missing_points']=[{'region_id':m.region_id,'label':m.label,'position':list(m.position),
+                                            'reason_codes':reason_codes(result,m,key,display_unit),
+                                            'reason':reason_text(result,m,key,display_unit)}
+                                           for m in selected if not (m.valid and m.confidence>.05 and metric_value(result,m,key,display_unit) is not None)]
             assessment=assess_channel(result,key,selected,display_unit)
             assessment.pop('point_assessments')
             channels[-1]['evaluation']=assessment

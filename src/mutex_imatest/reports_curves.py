@@ -104,12 +104,17 @@ def collect_regions(result):
     return list(groups.values())
 
 
-def status_lines(region):
+def status_lines(region,result=None,metric=None,unit=None):
     """Merge identical channel failures, without allocating empty curve pages."""
     groups=OrderedDict()
     for m in region.measurements:
         status=('有效' if m.valid else '无效')+f'；置信度 {m.confidence:.2f}'
-        status+='；'+(' / '.join(m.flags) if m.flags else '无质量标志')
+        from .analysis_audit import reason_description,reason_text
+        if result is not None and metric and (not m.valid or m.confidence<=.05 or m.metric(metric) is None):
+            status+='；'+reason_text(result,m,metric,unit)
+            if m.flags:status+=' ['+' / '.join(m.flags)+']'
+        else:
+            status+='；'+(' / '.join(reason_description(flag)+' ['+flag+']' if reason_description(flag)!=flag else flag for flag in m.flags) if m.flags else '无质量标志')
         if not m.curves:status+='；未保存曲线'
         if not m.valid and m.method and ': ' in m.method:status+='；'+m.method.split(': ',1)[1]
         groups.setdefault(status,[]).append(m.channel)
@@ -257,7 +262,7 @@ def render_mixed_pdf(result,preview,path,metric,channel,unit):
         for region in regions:
             ensure(100)
             paragraph(f'{region.label} [{region.region_id}] · {KIND_NAMES.get(region.kind,region.kind)}',10,True)
-            for line in status_lines(region):paragraph(line,8,gap=3)
+            for line in status_lines(region,result,metric,unit):paragraph(line,8,gap=3)
             for m in region.measurements:
                 keys=list(dict.fromkeys([actual,*common.get(region.kind,[])]))
                 values=[f'{key}={m.metric(key):.5g} {m.units.get(key, display_unit if key==actual else "")}' for key in keys if m.metric(key) is not None]
@@ -268,7 +273,7 @@ def render_mixed_pdf(result,preview,path,metric,channel,unit):
             continuation=f'原生曲线（续） · {region.label[:120]}'+('...' if len(region.label)>120 else '')+f' [{region.region_id}]'
             new_page(f'原生曲线 · {region.label} [{region.region_id}]')
             paragraph(KIND_NAMES.get(region.kind,region.kind)+'；同一区域按通道叠加，坐标和单位保持原生值。',9)
-            for line in status_lines(region):paragraph(line,8,gap=3)
+            for line in status_lines(region,result,metric,unit):paragraph(line,8,gap=3)
             ensure(300);chart(region.plots[0],margin,y,content,290);y+=302
             diagnostics=region.plots[1:];gap=16;cw=(content-gap)/2
             for start in range(0,len(diagnostics),2):

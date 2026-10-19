@@ -187,3 +187,59 @@ def test_exact_threshold_sample_is_a_measurement_not_a_missing_crossing():
     assert values['ctf50']==rows[4].values['target_frequency']
     assert values['ctf20']==rows[5].values['target_frequency']
     assert curve['crossing_support']['ctf20']['exact_sample']
+
+
+@pytest.mark.parametrize('depth',[.12,.16])
+@pytest.mark.parametrize('phase',[-.3,0,.3])
+def test_narrow_shallow_gap_contamination_cannot_become_a_fourth_bar(depth,phase):
+    frequency=1/64
+    image,truth=blurred_bars(frequency,1.2,phase)
+    center=(image.shape[1]-1)/2+phase
+    # An independently specified 2-pixel-wide dark fiber in one white gap.
+    # Its contrast is far smaller and its width far narrower than a real bar.
+    artifact=depth*np.exp(-.5*((np.arange(image.shape[1])-(center-32))/1.5)**2)
+    image-=artifact
+    before=image.copy()
+    values,flags,confidence,curve=measure_bars(image,frequency)
+    assert values['raw_detected_bar_count'] in [3,4]
+    assert values['detected_bar_count']==3
+    assert values['rejected_artifact_count']==values['raw_detected_bar_count']-3
+    assert flags==(['profile_contamination'] if values['rejected_artifact_count'] else []) and confidence>0
+    assert values['ctf']==pytest.approx(truth,abs=.002)
+    assert len(curve['raw_dark_peak_x'])==values['raw_detected_bar_count']
+    assert len(curve['rejected_artifact_x'])==values['rejected_artifact_count']
+    assert np.array_equal(image,before)
+
+
+@pytest.mark.parametrize('defect',['deep_gap','broad_gap','four_bars','wrong_period','high_frequency'])
+def test_contamination_guard_does_not_recover_ambiguous_or_wrong_targets(defect):
+    f=.08 if defect=='high_frequency' else 1/64
+    image,_=blurred_bars(f,.8)
+    center=(image.shape[1]-1)/2;period=1/f
+    if defect=='four_bars':
+        # Four equal dark bars cannot be reinterpreted as a three-bar burst.
+        x=np.arange(260)
+        profile=.9-.8*sum(np.exp(-.5*((x-mu)/6)**2) for mu in [34,98,162,226])
+        image=np.tile(profile,(80,1))
+    else:
+        sigma=.28*period if defect=='broad_gap' else .025*period
+        depth=.5 if defect=='deep_gap' else .14
+        image-=depth*np.exp(-.5*((np.arange(image.shape[1])-(center-.5*period))/sigma)**2)
+    if defect=='wrong_period':f*=1.7
+    values,flags,confidence,curve=measure_bars(image,f)
+    assert not values['rejected_artifact_count'] and 'profile_contamination' not in flags
+    assert values['detected_bar_count']==values['raw_detected_bar_count']
+    if values['raw_detected_bar_count']!=3 or defect=='wrong_period':
+        assert {'bars_not_separated','bar_geometry_mismatch','low_contrast','ctf_noise_limited'}.intersection(flags)
+
+
+def test_minor_contamination_warning_and_frequency_evidence_reach_summary():
+    rows,truth_rows=synthetic_curve()
+    rows[3].flags.append('profile_contamination')
+    rows[3].values.update(raw_detected_bar_count=4,rejected_artifact_count=1)
+    expected,_,_,_=summarize_curve(truth_rows)
+    values,curve,flags,confidence=summarize_curve(rows)
+    assert 'profile_contamination' in flags and values['rejected_artifact_count']==1
+    assert values['profile_contaminated_frequency_count']==1
+    assert values['ctf50']==pytest.approx(expected['ctf50'],rel=.04)
+    assert curve['sequence_valid'][3]

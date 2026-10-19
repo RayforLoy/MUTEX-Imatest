@@ -195,6 +195,11 @@ class TileReader(QThread):
         self.generation+=1
         self.requests.put(("source",self.generation,path,config,metadata,native_cache,self.cancel_event))
         return self.generation
+    def clear(self):
+        """Invalidate queued pixels and close the current source on its thread."""
+        self.cancel_event.set();self.generation+=1
+        self.requests.put(("clear",self.generation))
+        return self.generation
     def request(self,generation,key,box,level):
         self.requests.put(("tile",generation,key,box,level))
     def run(self):
@@ -204,6 +209,11 @@ class TileReader(QThread):
             try:request=self.requests.get(timeout=.2)
             except queue.Empty:continue
             if request[0]=="stop":break
+            if request[0]=="clear":
+                if request[1]==self.generation:
+                    if source:source.close()
+                    source=None;generation=request[1]
+                continue
             if request[0]=="source":
                 if request[1]!=self.generation:continue
                 if source:source.close()

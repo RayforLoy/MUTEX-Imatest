@@ -127,7 +127,7 @@ def _field_to_region_edges(points,values,boxes,iw,ih,width,height,interpolate,co
     return field
 
 
-def heatmap_data(result,metric,channel="G",width=800,height=None,unit="cy/px",interpolate=True):
+def heatmap_data(result,metric,channel="G",width=800,height=None,unit="cy/px",interpolate=True,language='zh_CN'):
     from .resolution import metric_key,view_result,PAIRED_SHIFT_METRICS,RAW_METRIC_KINDS,MULTI_METRICS
     if metric in PAIRED_SHIFT_METRICS:channel=PAIRED_SHIFT_METRICS[metric];unit='px'
     source=result
@@ -140,18 +140,23 @@ def heatmap_data(result,metric,channel="G",width=800,height=None,unit="cy/px",in
                 (actual in m.values or metric in m.values or m.kind in RAW_METRIC_KINDS.get(metric,set()) or
                  m.kind=='usaf_summary' and metric in MULTI_METRICS or m.kind=='focus' and metric in {'best_focus','focus_offset'})]
     from .heatmap_coverage import measurement_boxes
+    from .analysis_audit import reason_codes,reason_text,reason_description
     context_boxes=measurement_boxes(source,candidates)
     regions=[]
     for m,box in zip(candidates,context_boxes):
         v=m.metric(actual)
-        usable=m.valid and v is not None and m.confidence>.05 and np.isfinite(m.position).all()
+        causes=reason_codes(source,m,metric,unit)
+        finite_position=bool(np.isfinite(m.position).all())
+        if not finite_position:causes.append('invalid_position')
+        usable=m.valid and v is not None and m.confidence>.05 and finite_position and 'missing_calibration' not in causes
         if usable:
             points.append(m.position);values.append(v);ids.append(m.region_id);rows.append(m)
-        reason='' if usable else '质量检查未通过' if not m.valid else '置信度过低' if m.confidence<=.05 else (
-            f'未测得可靠的 {metric.upper()} 阈值交点；有效曲线可能未跨阈值，或三条纹已不可分辨'
-            if metric in {'ctf50','ctf20','ctf10'} else '缺少物理标定，无法换算当前单位' if m.metric(metric) is not None else '当前指标未测得有效数值')
+        reason='' if usable else reason_text(source,m,metric,unit,language)
+        if not finite_position:reason+='; '+reason_description('invalid_position',language)
+        if not usable and not reason:reason=reason_description('no_value',language)
         regions.append({'id':m.region_id,'label':m.label,'position':m.position,'box':box,'value':v,
-                        'usable':usable,'valid':m.valid,'reason':reason,'flags':m.flags})
+                        'usable':usable,'valid':m.valid,'reason':reason,'reason_codes':[] if usable else causes,
+                        'reason_en':'' if usable else reason_text(source,m,metric,unit,'en'), 'flags':m.flags})
     points=np.asarray(points,float).reshape(-1,2);values=np.asarray(values,float)
     boxes=measurement_boxes(source,rows)
     context_points=np.asarray([m.position for m in candidates],float).reshape(-1,2)
@@ -162,11 +167,16 @@ def heatmap_data(result,metric,channel="G",width=800,height=None,unit="cy/px",in
     notice=(f'当前指标 {len(values)}/{len(regions)} 个区域有有效数值；灰色斜线为未测得区域，不跨缺失测点插值。' if missing else '')
     if missing and metric in {'ctf50','ctf20','ctf10'}:
         notice+=f' {metric.upper()} 需要可靠的阈值交点；整卡调焦可查看“已确认分辨率”或“整卡多频率调焦评分”。'
+    if str(language).startswith('en'):
+        notice=f'{len(values)}/{len(regions)} regions have valid values; gray hatching marks missing data. Interpolation does not cross missing measurement sites.' if missing else ''
+        if missing and metric in {'ctf50','ctf20','ctf10'}:
+            notice+=f' {metric.upper()} requires a supported threshold crossing; confirmed resolution and the multifrequency focus score may remain available.'
+    missing_reasons=Counter(code for r in missing for code in r['reason_codes'])
     return {"field":field,"points":points,"values":values,"ids":ids,"boxes":boxes,"low":low,"high":high,"metric":actual,"unit":unit,
-            'regions':regions,'missing_count':len(missing),'notice':notice}
+            'regions':regions,'missing_count':len(missing),'missing_reasons':dict(missing_reasons),'notice':notice}
 
-def heatmap_rgba(result,metric,channel="G",width=800,height=None,unit="cy/px",alpha=.48,interpolate=True,limits=None):
-    data=heatmap_data(result,metric,channel,width,height,unit,interpolate)
+def heatmap_rgba(result,metric,channel="G",width=800,height=None,unit="cy/px",alpha=.48,interpolate=True,limits=None,language='zh_CN'):
+    data=heatmap_data(result,metric,channel,width,height,unit,interpolate,language)
     low,high=limits or (data["low"],data["high"])
     data["rgba"]=colorize(data["field"],low,high,alpha)
     # No-data hatching is deliberately achromatic and carries no scalar value.

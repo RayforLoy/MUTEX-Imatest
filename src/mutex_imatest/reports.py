@@ -61,7 +61,10 @@ def export_html(result, preview, path, metric="mtf50", channel="G", unit="cy/px"
             f"<tr><th>{esc(key)}</th><td>{esc(json.dumps(plain(v), ensure_ascii=False))}</td><td>{esc(m.units.get(key, ''))}</td></tr>"
             for key, v in m.values.items()
         )
-        flag_text = "; ".join(m.flags) or "无质量标志"
+        from .analysis_audit import reason_text,reason_description
+        flag_text = "; ".join(reason_description(flag)+' ['+flag+']' if reason_description(flag)!=flag else flag for flag in m.flags) or "无质量标志"
+        if not m.valid or m.confidence<=.05 or value is None:
+            flag_text = reason_text(result,m,metric,unit)+'；'+flag_text
         diagnostic_html=(f'<details><summary>几何 / 缺陷诊断</summary><pre>{esc(json.dumps(plain(m.diagnostics),ensure_ascii=False,indent=2))}</pre></details>' if m.diagnostics else '')
         value_text = f"{value:.6g}" if value is not None else "未测得"
         rows.append(
@@ -141,7 +144,13 @@ def export_overlay(result,preview,path,metric="mtf50",channel="G",unit="cy/px",a
     draw.text((10,4),label,fill="#102a43",font=font)
     if data['missing_count']:
         draw.text((10,32),f"有效测点 {len(data['values'])}/{len(data['regions'])}；灰色斜线：当前指标未测得；仅相邻有效区域间插值",fill='#596a76',font=font)
-    image.convert("RGB").save(path)
+    # Standalone PNGs keep point-specific coverage diagnoses in standard PNG
+    # text metadata, while HTML and PDF reports display the same reason text.
+    from PIL.PngImagePlugin import PngInfo
+    metadata=PngInfo();metadata.add_text('MUTEX missing measurements',json.dumps([
+        {key:r[key] for key in ['id','label','position','reason','reason_codes']} for r in data['regions'] if not r['usable']
+    ],ensure_ascii=False))
+    image.convert("RGB").save(path,pnginfo=metadata)
     return data
 
 def export_pdf(result,preview,path,metric="mtf50",channel="G",unit="cy/px"):

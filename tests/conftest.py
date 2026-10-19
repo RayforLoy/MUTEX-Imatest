@@ -7,6 +7,10 @@ from mutex_imatest.config import AnalysisConfig
 def isolate_preferences(monkeypatch,tmp_path):
     import mutex_imatest.config as module
     monkeypatch.setattr(module,"config_file",lambda:tmp_path/"settings.json")
+    # Existing numerical/UI tests use deterministic presentation; production
+    # remains system-language/system-theme unless a user chooses otherwise.
+    from mutex_imatest.ui.preferences import UiPreferences,save_preferences
+    save_preferences(UiPreferences(language='zh_CN',theme='light'))
     import mutex_imatest.templates as templates
     charts=tmp_path/'charts';charts.mkdir()
     monkeypatch.setattr(templates,'library_dir',lambda:charts)

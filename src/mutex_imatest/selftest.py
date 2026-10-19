@@ -13,7 +13,8 @@ def run(out,headless=True):
     folder=Path(out).resolve();folder.mkdir(parents=True,exist_ok=True)
     from .ui.style import apply_light_theme
     app=QApplication.instance() or QApplication([]);apply_light_theme(app)
-    window=MainWindow();window.resize(1580,1020);window.persist_preferences=False
+    from .ui.preferences import UiPreferences
+    window=MainWindow(ui_preferences=UiPreferences('zh_CN','light'));window.resize(1580,1020);window.persist_preferences=False
     window.config=AnalysisConfig(transfer="linear",channels="RGB",cache_dir=str(folder/"cache"))
     window.restore_settings();window.show()
     state={"stage":"analyze","started":time.monotonic()};errors=[]
@@ -85,6 +86,18 @@ def run(out,headless=True):
             assert goals.grab().save(str(folder/'evaluation-goals.png'))
             goals.accept();assert goals.limits['mean']['max']==1e-7
             state['measurement_evaluation']={'passed':True,'small_goal_preserved':goals.limits['mean']['max']}
+            # Exercise the new presentation in the frozen app as well as tests.
+            from PySide6.QtGui import QPalette
+            measurement_keys=window.metric_selector.checked_keys()
+            window.set_ui_language('en');window.set_ui_theme('dark');app.processEvents()
+            assert window.edit_menu.title()=='Edit' and window.display_menu.title()=='View'
+            assert window.palette().color(QPalette.ColorRole.Window).lightness()<80
+            assert window.metric_selector.checked_keys()==measurement_keys
+            assert window.grab().save(str(folder/'english-dark.png'))
+            window.set_ui_language('zh_CN');window.set_ui_theme('light');app.processEvents()
+            assert window.edit_menu.title()=='编辑' and window.display_menu.title()=='显示'
+            state['presentation']={'passed':True,'languages':['zh_CN','en'],'themes':['light','dark'],
+                                   'stable_measurement_keys':True,'menus':['edit','view','settings']}
             # Verify both new surfaces and the actual spawn-based workbench path
             # in the frozen app, not only imports in the development interpreter.
             from .ui.iq_workbench import ProfileDialog,WorkbenchDialog
@@ -121,6 +134,7 @@ def run(out,headless=True):
               "encrypted_template":state.get('encrypted_template'),
               'iq_workbench':state.get('iq_workbench'),
               'measurement_evaluation':state.get('measurement_evaluation'),
+              'presentation':state.get('presentation'),
               'templates':{'total':len(templates),'bundled':[{'id':c.id,'name':c.name,'regions':len(c.regions),'source_absent':not c.source_path,'preview_exists':bool(c.preview and Path(c.preview).is_file())} for c in bundled]},
               "errors":errors,"logs":window.logs.toPlainText(),"elapsed_seconds":time.monotonic()-state["started"]}
         (folder/"selftest.json").write_text(json.dumps(data,ensure_ascii=False,indent=2),encoding="utf-8")

@@ -6,7 +6,7 @@ on:
       tag:
         description: Existing draft release tag
         required: true
-        default: v0.8.0
+        default: v0.9.0
       source_sha256:
         description: SHA-256 of the complete source ZIP already on the draft
         required: true

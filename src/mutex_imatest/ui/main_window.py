@@ -33,6 +33,7 @@ from .template_widgets import TemplateComboBox,TemplatePreview
 from .dialogs import PerformanceDialog,FocusSetupDialog
 from .availability import configure_availability,set_availability
 from .metric_checklist import MetricChecklist
+from .window_actions import WindowActionsMixin
 from .evaluation_dialog import EvaluationDialog,reference_html
 from ..evaluation import (evaluate_result,assess_channel,selected_rows,effective_reference,
                           channel_text,measurement_text,STATUS_COLORS)
@@ -67,6 +68,8 @@ FLAG_NAMES['halo_insufficient_evidence']='低频边缘证据不足，不能判�
 FLAG_NAMES['directional_resolution_incomplete']='双向连续分辨率证据不完整'
 FLAG_NAMES['outside_image']='图像未覆盖该单元'
 FLAG_NAMES['insufficient_contiguous_support']='连续有效频率证据不足'
+FLAG_NAMES['profile_contamination']='检出窄浅污染假谷；真实三线几何已核验，原始剖面保留'
+METRIC_NAMES.update({'raw_detected_bar_count':'原始暗谷候选数','rejected_artifact_count':'排除的窄浅杂质候选数'})
 
 def label(text,name=None):
     widget=QLabel(text)
@@ -84,25 +87,33 @@ def plot_widget(xlabel="cy/px",ylabel="响应"):
         widget.getAxis(axis).enableAutoSIPrefix(False)
     return widget
 
-class MainWindow(QMainWindow):
-    def __init__(self):
+class MainWindow(WindowActionsMixin,QMainWindow):
+    def __init__(self,*,ui_preferences=None):
         super().__init__();self.setWindowTitle("MUTEX Imatest · 扫描仪 / 翻拍调焦");self.resize(1500,980)
         from ..fonts import configure_fonts
         configure_fonts()
         self.setMinimumSize(1100,760);self.setStyleSheet(STYLE)
         self.config=load_config();self.entries=[];self.jobs={};self.focus_data=None;self.session=None;self.persist_preferences=True
+        self._initial_ui_preferences=ui_preferences
         self.charts=available_charts();self.current_index=-1;self.professional=False;self.compare_index=None;self.selected_region=None
         self.worker=WorkerManager(self);self.worker.event.connect(self.job_event);self.worker.idle.connect(self.jobs_idle)
         self.watcher=SettledWatcher(self);self.watcher.file_ready.connect(self.watch_file);self.watcher.error.connect(self.log_error)
         self.build_ui();self.build_menu();self.restore_settings()
         self.chart_combo.currentIndexChanged.connect(self.chart_changed)
         self.chart_changed(preserve_registration=True)
+        self.setup_presentation()
+        from .quality_warning import SharpeningWarningController
+        self.sharpening_warning=SharpeningWarningController(self,language=lambda:self.ui_controller.language)
+        self._closing=False
         self.setAcceptDrops(True)
         self.add_log("就绪。导入图像 → 选择图卡 → 检查配准 → 分析 → 比较焦位。")
     def build_ui(self):
         root=QWidget();self.setCentralWidget(root);outer=QVBoxLayout(root);outer.setContentsMargins(20,15,20,12);outer.setSpacing(10)
         header=QHBoxLayout();brand=QVBoxLayout();brand.addWidget(label("MUTEX Imatest","brand"));brand.addWidget(label("扫描仪 / 翻拍调焦 · 原精度光学测量","subtitle"));header.addLayout(brand);header.addStretch()
         self.state=label("离线 · 就绪","pill");header.addWidget(self.state)
+        self.language_choice=QComboBox();self.language_choice.setObjectName('languageChoice')
+        for name,value in [('跟随系统','system'),('简体中文','zh_CN'),('English','en')]:self.language_choice.addItem(name,value)
+        self.language_choice.setToolTip('界面语言；默认跟随系统语言');header.addWidget(self.language_choice)
         self.mode=QComboBox();self.mode.addItems(["简易模式","专业模式"]);self.mode.currentIndexChanged.connect(self.set_mode);header.addWidget(self.mode)
         outer.addLayout(header)
         toolbar=QHBoxLayout()
@@ -302,6 +313,7 @@ class MainWindow(QMainWindow):
         helpmenu.addAction(self.evaluation_action)
         self.logs_action=QAction('打开本次分析日志目录',self);self.logs_action.triggered.connect(self.open_diagnostics_folder);helpmenu.addAction(self.logs_action)
         self.ui_logs_action=QAction('打开界面错误日志目录',self);self.ui_logs_action.triggered.connect(self.open_ui_logs);helpmenu.addAction(self.ui_logs_action)
+        self.build_presentation_menus(helpmenu)
     def restore_settings(self):
         c=self.config
         self.transfer.setCurrentIndex(max(0,self.transfer.findData(c.transfer)));self.analysis_channels.setCurrentText(c.channels)
@@ -435,13 +447,16 @@ class MainWindow(QMainWindow):
                        '已生成' if ch.get('valid') else rec['reason'] or '无有效数据']
                 assessment=ch.get('evaluation',{});ref=rec.get('reference',{})
                 texts += [f"{assessment[k]:.5g}" if assessment.get(k) is not None else '—' for k in ['median','worst']]
-                texts += [assessment.get('label','无法评价'),ref.get('reference','')]
+                from .i18n import current_language
+                from .evaluation_dialog import english_reference_summary,english_channel_text
+                english=current_language()=='en'
+                texts += [assessment.get('label','无法评价'),english_reference_summary(rec['metric'],ref) if english else ref.get('reference','')]
                 for col,text in enumerate(texts):
                     item=QTableWidgetItem(text);item.setData(Qt.ItemDataRole.UserRole,(rec['metric'],ch.get('channel')))
                     if col==9:
                         item.setForeground(QColor(STATUS_COLORS.get(assessment.get('status'),'#798793')))
-                        item.setToolTip(channel_text(assessment) if assessment else rec['reason'])
-                    if col==10:item.setToolTip(ref.get('reference','')+'\n'+ref.get('criteria','')+'\n'+ref.get('basis',''))
+                        item.setToolTip((english_channel_text(assessment) if english else channel_text(assessment)) if assessment else rec['reason'])
+                    if col==10:item.setToolTip(reference_html(rec['metric'],ref) if english else ref.get('reference','')+'\n'+ref.get('criteria','')+'\n'+ref.get('basis',''))
                     self.batch_table.setItem(row,col,item)
         self.batch_table.resizeColumnsToContents();self.batch_table.horizontalHeader().setStretchLastSection(True)
         self.batch_table.setColumnWidth(10,330)
@@ -458,7 +473,9 @@ class MainWindow(QMainWindow):
             assessment=assess_channel(result,key,[m for m in rows if m.channel==channel],self.unit.currentText() if key in FREQUENCY_METRICS else None)
             ref=effective_reference(result,key)
             self.evaluation_badge.setText(assessment['label']+' · 查看依据')
-            self.evaluation_badge.setToolTip(channel_text(assessment))
+            from .i18n import current_language
+            from .evaluation_dialog import english_channel_text
+            self.evaluation_badge.setToolTip(english_channel_text(assessment) if current_language()=='en' else channel_text(assessment))
             color=STATUS_COLORS[assessment['status']]
             self.evaluation_badge.setStyleSheet(f'QPushButton {{ color:{color};border:1px solid {color};background:white;padding:6px;text-align:left; }}')
         else:
@@ -522,7 +539,10 @@ class MainWindow(QMainWindow):
             self.add_log('整卡：所有可识别频率、双向、RGB + 两种灰度；保留剪切提示，输入传递曲线保持当前设置。')
             self.analyze_selected()
         except Exception as exc:self.message_error(exc)
-    def add_log(self,message):self.logs.appendPlainText(time.strftime("%H:%M:%S")+"  "+str(message))
+    def add_log(self,message):
+        from .i18n import tr
+        self.logs.appendPlainText(time.strftime("%H:%M:%S")+"  "+tr(str(message)))
+        self.refresh_presentation()
     def log_error(self,message):self.add_log("错误："+str(message));self.status_text.setText(str(message));self.state.setText("任务需检查")
     def message_error(self,message):
         if isinstance(message,Exception):
@@ -635,6 +655,8 @@ class MainWindow(QMainWindow):
                     entry["result_path"]=event["result"];entry["result"]=AnalysisResult.load(event["result"]);entry["metadata"]=entry["result"].image
                     entry["focus_position"]=entry["result"].focus_position;entry["focus_unit"]=entry["result"].focus_unit;entry["status"]="已分析"
                     if self.session:self.session.add(entry["result"])
+                    if info.get('action')=='analyze' and not self._closing:
+                        self.sharpening_warning.register(entry['result'],uid,entry['path'])
                     if entry['result'].analysis_summary:self.add_log(f"一次分析完成 {entry['result'].analysis_summary['completed']} 项；详情见“所选分析结果”。")
                 else:
                     entry["metadata"]=ImageMetadata(**event["metadata"]);entry["status"]="已分析" if entry["result"] else "已导入"
@@ -654,9 +676,12 @@ class MainWindow(QMainWindow):
             self.add_log("任务已取消")
             if index is not None and info.get('action')!='preview_orientation':self.entries[index]["status"]="已取消";self.update_item(index)
         self.refresh_analysis_activity()
+        self.refresh_presentation()
     def jobs_idle(self):
         self.progress.setValue(100);self.cancel_button.setEnabled(False);self.state.setText("离线 · 就绪");self.status_text.setText(getattr(self,'orientation_feedback',None) or '任务完成');self.orientation_feedback=None
         self.refresh_analysis_activity()
+        if not self._closing:self.sharpening_warning.jobs_idle()
+        self.refresh_presentation()
     def cancel_jobs(self):
         for uid,info in self.jobs.items():
             if info.get('action')=='analyze' and info.get('state') in {'queued','running'}:
@@ -670,6 +695,7 @@ class MainWindow(QMainWindow):
             rows=[m for m in rows if m.channel=='G'] if r.optical_summary else rows
             extra+=f" · {sum(m.valid and (not r.optical_summary or m.metric('resolution_limit') is not None) for m in rows)}/{len(rows)} {'单元' if r.optical_summary else '有效'}"
         self.images.item(index).setText(Path(e["path"]).name+"\n"+extra)
+        self.refresh_presentation()
     def select_entry(self,index):
         if not 0<=index<len(self.entries):return
         self.current_index=index;self.display_entry(index)
@@ -793,7 +819,7 @@ class MainWindow(QMainWindow):
         if clipped:notes.append(f"{clipped} 点因信号剪切被严格排除；可按相对调焦重新分析，保留数值和警告。")
         if advisory:notes.append(f"相对调焦：{advisory} 点保留剪切提示；结果受剪切影响。")
         if failed:notes.append(f"{failed} 点定位未通过，继续排除。")
-        from ..analysis_audit import reason_for,REASONS
+        from ..analysis_audit import reason_for,reason_text,REASONS
         missing=Counter(reason_for(entry['result'],m,metric) for m in selected if not m.valid or m.metric(metric) is None)
         if missing:notes.append('缺失原因：'+'；'.join(f'{REASONS.get(k,k)} {n}' for k,n in missing.items()))
         if result.settings.get("transfer")=="unknown" and not result.image.is_linear:
@@ -811,11 +837,15 @@ class MainWindow(QMainWindow):
         for row,m in enumerate(selected):
             value=m.metric(data["metric"]) if data else None
             state=", ".join(FLAG_NAMES.get(f,f) for f in m.flags) or "有效"
-            if not m.valid or value is None:state=REASONS.get(reason_for(entry['result'],m,metric),'未测得')+'；'+state
+            failed_reason=reason_text(entry['result'],m,metric,unit) if not m.valid or value is None else ''
+            if failed_reason:state=failed_reason+'；'+state
             texts=[m.label,m.kind,m.channel,f"{value:.5g}" if value is not None else "—",f"{m.confidence:.2f}",state,f"{m.position[0]:.0f}, {m.position[1]:.0f}",measurement_text(result,m,metric,unit if metric in FREQUENCY_METRICS else None).split('：')[0]]
             for col,text in enumerate(texts):
                 item=QTableWidgetItem(text);item.setData(Qt.ItemDataRole.UserRole,m.region_id)
-                if not m.valid:item.setForeground(QColor("#ad704d"))
+                if not m.valid:
+                    from .style import is_dark
+                    item.setForeground(QColor('#e4b18b' if is_dark() else '#ad704d'))
+                if failed_reason:item.setToolTip(failed_reason)
                 if col==7:item.setToolTip(measurement_text(result,m,metric,unit if metric in FREQUENCY_METRICS else None))
                 self.table.setItem(row,col,item)
         self.table.resizeColumnsToContents();self.table.horizontalHeader().setStretchLastSection(True)
@@ -824,6 +854,7 @@ class MainWindow(QMainWindow):
             self.selected_region=next((m.region_id for m in result.measurements if m.valid and m.channel==channel),None)
         if self.selected_region:
             current_tab=self.tabs.currentIndex();self.select_region(self.selected_region);self.tabs.setCurrentIndex(current_tab)
+        self.refresh_presentation()
     def direction_result(self,result):
         direction=self.usaf_direction.currentData()
         if result and result.optical_summary:
@@ -856,7 +887,7 @@ class MainWindow(QMainWindow):
         self.curve.setLogMode(x=False,y=False)
         self.curve.clear();colors={"R":"#db5b5b","G":"#168886","B":"#5d79c8","Y":"#988047","Y_align":"#8e5ead"}
         if result.optical_summary and any(m.kind=='usaf_summary' for m in measurements):
-            self.plot_usaf_unit(result,region_id,measurements,colors);return
+            self.plot_usaf_unit(result,region_id,measurements,colors);self.refresh_presentation();return
         selected=None
         for m in measurements:
             choice=self.curve_selector.currentData()
@@ -879,9 +910,13 @@ class MainWindow(QMainWindow):
             self.detail.setPlainText(selected.label+" · "+selected.channel+"\n\n"+"\n".join(f"{METRIC_NAMES.get(k,k)}: {v:.5g} {selected.units.get(k,'')}" for k,v in visible.items() if v is not None and isinstance(v,(float,int)))+
               "\n\n状态："+(", ".join(FLAG_NAMES.get(f,f) for f in selected.flags) or "有效")+"\n\n置信度 "+f"{selected.confidence:.2f}")
             self.detail.appendPlainText('\n'+measurement_text(result,selected,self.metric_selector.currentData(),self.unit.currentText() if self.metric_selector.currentData() in FREQUENCY_METRICS else None))
+            if not selected.valid or selected.metric(metric_key(self.metric_selector.currentData(),self.unit.currentText())) is None:
+                from ..analysis_audit import reason_text
+                self.detail.appendPlainText('\n未通过原因：'+reason_text(result,selected,self.metric_selector.currentData(),self.unit.currentText()))
             if self.professional and selected.diagnostics:
                 self.detail.appendPlainText('\n几何 / 缺陷诊断：\n'+json.dumps(selected.diagnostics,ensure_ascii=False,indent=2)[:16000])
         self.tabs.setCurrentIndex(0)
+        self.refresh_presentation()
     def change_curve(self,*args):
         if self.selected_region:self.select_region(self.selected_region)
     def plot_usaf_unit(self,result,region_id,measurements,colors):
@@ -901,6 +936,9 @@ class MainWindow(QMainWindow):
             if chosen:
                 lines += [f'{METRIC_NAMES.get(k,k)}: {v:.5g} {chosen.units.get(k,"")}' for k,v in chosen.values.items() if isinstance(v,(int,float))]
                 lines += ['状态：'+', '.join(FLAG_NAMES.get(f,f) for f in chosen.flags),measurement_text(result,chosen,'sharpening_halo_pct','%')]
+                if not chosen.valid or chosen.metric('sharpening_halo_pct') is None:
+                    from ..analysis_audit import reason_text
+                    lines+=['未通过原因：'+reason_text(result,chosen,'sharpening_halo_pct','%')]
             self.detail.setPlainText('\n'.join(lines));self.tabs.setCurrentIndex(0);return
         raw=self.curve_selector.currentData()=='ctf';unit=self.unit.currentText()
         dirs=['vertical'] if '-vertical-' in region_id else ['horizontal'] if '-horizontal-' in region_id else ['vertical','horizontal']
@@ -923,7 +961,12 @@ class MainWindow(QMainWindow):
         if chosen:
             lines += [f'{METRIC_NAMES.get(k,k)}: {v:.5g} {chosen.units.get(k,"")}' for k,v in chosen.values.items() if v is not None and isinstance(v,(float,int)) and (self.professional or k in METRIC_NAMES)]
             lines+=['状态：'+', '.join(FLAG_NAMES.get(f,f) for f in chosen.flags)]
+            if 'profile_contamination' in chosen.flags:
+                lines+=['污染提示：至少一个方向有窄浅杂质；数值来自当前选用方向，详见原始频点剖面。']
             lines+=['',measurement_text(result,chosen,self.metric_selector.currentData(),self.unit.currentText() if self.metric_selector.currentData() in FREQUENCY_METRICS else None)]
+            if not chosen.valid or chosen.metric(metric_key(self.metric_selector.currentData(),self.unit.currentText())) is None:
+                from ..analysis_audit import reason_text
+                lines+=['未通过原因：'+reason_text(result,chosen,self.metric_selector.currentData(),self.unit.currentText())]
         if 'ctf' in result.optical_summary.get('definitions',{}):lines+=['CTF 取三黑条之间的内部明暗起伏，排除外侧白底；只在相邻有效频点之间插值。',
             '剪切频点不参与；后续未剪切连续段仍可提供交点。缺线、信噪比不足或频率断档后停止，已确认分辨率仍要求自低频连续通过。']
         lines+=['低频归一化 CTF 为输入响应；未知曲线、剪切、图卡印刷均影响结果。','CTF 曲线不能直接称为光学 MTF。']
@@ -1218,7 +1261,9 @@ class MainWindow(QMainWindow):
           "本软件为工程测量，未声称 ISO/FADGI 认证。USAF / 二值星图为 CTF，斜边为 SFR；RAW 为线性相机 RGB。"
           "未知传递曲线、印刷误差、照明、混叠与机内处理都会影响数值。\n\n"
           "GPL-3.0-or-later；用户源图卡和私有内置资产许可独立。合成示例卡 CC0。")
-    def on_zoom(self,percent):self.zoom_label.setText(f"预览缩放：{percent:.1f}%")
+    def on_zoom(self,percent):
+        from .i18n import tr
+        self.zoom_label.setText(tr('预览缩放：')+f'{percent:.1f}%')
     def dragEnterEvent(self,event):
         if event.mimeData().hasUrls():event.acceptProposedAction()
     def dropEvent(self,event):self.import_paths([u.toLocalFile() for u in event.mimeData().urls() if u.isLocalFile()])
@@ -1226,6 +1271,12 @@ class MainWindow(QMainWindow):
         if event.key()==Qt.Key.Key_Escape:self.viewer.cancel_anchors();self.status_text.setText("已取消四点配准")
         else:super().keyPressEvent(event)
     def closeEvent(self,event):
+        self._closing=True
+        warning=getattr(self,'sharpening_warning',None)
+        if warning:
+            warning.discard_pending()
+            if warning.dialog is not None:warning.dialog.close()
+        if hasattr(self,'ui_controller'):self.ui_controller.dispose()
         try:
             if self.persist_preferences:save_config(self.snapshot_config())
         except Exception:pass

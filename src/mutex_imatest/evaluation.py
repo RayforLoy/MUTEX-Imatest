@@ -27,6 +27,7 @@ RESPONSE_METRICS = FREQUENCY_METRICS | {'usaf_focus_score','mtf_area','informati
     'contrast_at_frequency','mtf_nyquist','overshoot_pct','undershoot_pct','alignment_gain_pct',
     'relative_illumination_min_pct','corner_illumination_pct','illumination_nonuniformity_pct','spatial_snr_db'}
 CAUTIONS = {
+    'profile_contamination':'原剖面含窄浅污染假谷；三线几何核验后排除候选，仍需检查图卡洁净度',
     'clipping_advisory':'保留了剪切信号，只适合受限比较',
     'aliasing_risk':'存在混叠风险', 'bars_not_separated':'条纹未可靠分离',
     'bar_geometry_mismatch':'暗条间距或位置与靶频率不符','ctf_noise_limited':'内部条纹起伏未通过噪声检查',
@@ -117,7 +118,7 @@ def effective_reference(result, key):
         ref.update(default_reference=ref['reference'], default_criteria=ref['criteria'],
                    reference=('绝对值 ' if goal.get('absolute',REFERENCES[key].absolute) else '')+' 且 '.join(bounds)+' '+unit,
                    criteria='用户目标；每个有效测点逐一检查，任何无效 / 受限点都不能被汇总为全部通过。'+goal.get('note',''),
-                   basis='用户自定义目标（非标准认证）', goal=dict(goal))
+                   basis='用户自定义目标（非标准认证）', goal=dict(goal), goal_unit=unit)
     if key=='clipping_fraction' and not goal:
         threshold=result.settings.get('maximum_clip_fraction',.01)
         ref['criteria']=f'当前排除阈值 {threshold:g}（{threshold*100:g}%）；0 为无剪切，0–阈值提示，超过阈值建议重测。'+ref['criteria']
@@ -143,6 +144,7 @@ def _limitations(result, key, m):
     notes=[]
     for flag,text in CAUTIONS.items():
         if flag not in m.flags:continue
+        if flag=='profile_contamination' and key not in RESPONSE_METRICS:continue
         if flag in frequency_warnings and key not in FREQUENCY_METRICS|{'resolution_anisotropy','star_anisotropy'}:continue
         if flag in {'clipping_advisory','strict_clipping_limits_curve','aliasing_risk','mtf50_above_nyquist'} and key not in RESPONSE_METRICS:continue
         notes.append(text)
@@ -170,10 +172,12 @@ def assess_measurement(result, m, key, unit=None, best=None):
     base={'metric':key,'channel':m.channel,'region_id':m.region_id,'value':value,'unit':unit,
           'status':'unavailable','label':STATUS_LABELS['unavailable'],'text':'','limitations':[], 'rule_version':REFERENCE_VERSION}
     if not m.valid or m.confidence<=.05:
-        base['text']='测量无效或置信度不足；'+(' / '.join(m.flags) or 'confidence ≤ 0.05')
+        from .analysis_audit import reason_text
+        base['text']=reason_text(result,m,key,unit)
         return base
     if value is None:
-        base['text']='没有此指标的有效值或缺少该单位的标定；未测得不填零。'
+        from .analysis_audit import reason_text
+        base['text']=reason_text(result,m,key,unit)+'；未测得不填零。'
         return base
     if key in {'sampling_dpi_x','sampling_dpi_y'} and not result.template.get('calibrated'):
         base['text']='物理尺寸未标定，无法评价几何 PPI。'

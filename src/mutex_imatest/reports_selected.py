@@ -55,10 +55,15 @@ def _html(result,summary,images,path,unit='cy/px'):
             if image:
                 encoded=base64.b64encode(image.read_bytes()).decode('ascii')
                 maps.append(f'<figure><figcaption>{esc(ch["channel"])} · {esc(ch["unit"])} · {ch["valid"]} 个有效测点</figcaption><img src="data:image/png;base64,{encoded}" alt="{esc(rec["name"])} {esc(ch["channel"])}"></figure>')
-        if not maps:continue
+        missing_rows=[]
+        for ch in rec['channels']:
+            for point in ch.get('missing_points',[]):
+                missing_rows.append('<tr>'+''.join('<td>'+esc(value)+'</td>' for value in [point['label'] or point['region_id'],ch['channel'],point['reason']])+'</tr>')
+        if not maps and not missing_rows:continue
         reasons=rec['reason'] or '蓝 → 绿 → 黄 → 红；同一分析的通道共用色标。白点实测，灰色斜线为未测得；仅相邻有效区域间插值，颜色延伸至区域边界。'
         flags='；'.join(ch['channel']+': '+', '.join(f'{k}={v}' for k,v in ch['flags'].items()) for ch in rec['channels'] if ch['flags'])
-        sections.append(f'<section id="{esc(rec["metric"])}"><h2>{esc(rec["name"])}</h2><p>{esc(reasons)}</p><div class="maps">{"".join(maps)}</div><details><summary>质量标志</summary><p>{esc(flags or "无区域级标志")}</p></details></section>')
+        failures=('<details class="missing-points"><summary>未通过 / 未测得点的具体原因</summary><table><thead><tr><th>区域</th><th>通道</th><th>原因</th></tr></thead><tbody>'+''.join(missing_rows)+'</tbody></table></details>') if missing_rows else ''
+        sections.append(f'<section id="{esc(rec["metric"])}"><h2>{esc(rec["name"])}</h2><p>{esc(reasons)}</p><div class="maps">{"".join(maps)}</div>{failures}<details><summary>质量标志</summary><p>{esc(flags or "无区域级标志")}</p></details></section>')
     warnings=''.join('<li>'+esc(s)+'</li>' for s in result.warnings)
     evaluation_section=html_evaluations(result,summary['requested_metrics'],unit)
     text=f'''<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{esc(report_title)}</title>
@@ -126,6 +131,16 @@ def _pdf(result,summary,images,path,unit='cy/px'):
                 if image_path:
                     image=QImage(str(image_path));scale=min(cw/image.width(),(h-310)/image.height());iw,ih=image.width()*scale,image.height()*scale
                     painter.drawImage(QRectF(x+(cw-iw)/2,270,iw,ih),image)
+        for rec in summary['items']:
+            missing=[(ch['channel'],point) for ch in rec['channels'] for point in ch.get('missing_points',[])]
+            if not missing:continue
+            new_page();text(QRectF(margin,15,content,55),rec['name']+' · 未通过 / 未测得点',15,True);y=83
+            font=QFont('Microsoft YaHei',9);metrics=QFontMetrics(font,writer)
+            for channel,point in missing:
+                line=f"{point['label'] or point['region_id']} · {channel}：{point['reason']}"
+                height=max(25,metrics.boundingRect(QRect(0,0,int(content),10000),int(Qt.TextFlag.TextWordWrap),line).height()+10)
+                if y+height>h-48:new_page();text(QRectF(margin,15,content,55),rec['name']+' · 原因（续）',15,True);y=83
+                text(QRectF(margin,y,content,height),line,9);y+=height
         footer()
         from .reports_evaluation import append_pdf_evaluations
         append_pdf_evaluations(writer,painter,result,summary['requested_metrics'],unit)

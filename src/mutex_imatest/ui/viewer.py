@@ -32,7 +32,7 @@ class ImageViewer(QGraphicsView):
         self.setResizeAnchor(QGraphicsView.ViewportAnchor.AnchorViewCenter)
         self.setFrameShape(QGraphicsView.Shape.NoFrame)
         self.metadata=None;self.preview_item=None;self.overlay_item=None;self.annotations=[]
-        self.result=None;self.selected_metric="mtf50";self.channel="G";self.unit="cy/px";self.alpha=.48;self.interpolate=True
+        self.result=None;self.selected_metric="mtf50";self.channel="G";self.unit="cy/px";self.alpha=.48;self.interpolate=True;self.show_annotations=True
         self.tile_items=OrderedDict();self.pending=set();self.tile_bytes=0;self.limit=256*2**20
         self.reader=TileReader(self);self.reader.ready.connect(self._tile_ready);self.reader.error.connect(self.error);self.reader.start()
         self.generation=0;self.request_timer=QTimer(self);self.request_timer.setSingleShot(True);self.request_timer.timeout.connect(self._request_tiles)
@@ -54,6 +54,16 @@ class ImageViewer(QGraphicsView):
         self.generation=self.reader.reset(metadata.path,config,metadata,native_cache)
         self.fit_image()
         self.orientation_changed.emit(self.orientation.to_dict())
+    def clear_image(self):
+        """Clear the queue selection while keeping the tile thread reusable."""
+        self.request_timer.stop();self.generation=self.reader.clear()
+        self.scene().clear();self.scene().setSceneRect(QRectF())
+        self.annotations=[];self.preview_item=None;self.overlay_item=None
+        self.tile_items.clear();self.pending.clear();self.tile_bytes=0
+        self.metadata=None;self.result=None;self.anchor_mode=False;self.anchors=[]
+        self.orientation=PreviewOrientation();self.fitted=True
+        self.setTransform(QTransform());self.setDragMode(QGraphicsView.DragMode.ScrollHandDrag);self.unsetCursor()
+        self.zoom_changed.emit(100.);self.orientation_changed.emit(self.orientation.to_dict())
     def orientation_transform(self,scale=1.):
         m=self.orientation.matrix()*scale
         return QTransform(m[0,0],m[1,0],m[0,1],m[1,1],0,0)
@@ -148,7 +158,9 @@ class ImageViewer(QGraphicsView):
         self.annotations=[]
         if self.overlay_item:self.scene().removeItem(self.overlay_item);self.overlay_item=None
         if not self.result or not self.metadata:return None
-        data=heatmap_rgba(self.result,self.selected_metric,self.channel,800,None,self.unit,self.alpha,self.interpolate,limits)
+        from .i18n import current_language
+        from ..analysis_audit import reason_description
+        data=heatmap_rgba(self.result,self.selected_metric,self.channel,800,None,self.unit,self.alpha,self.interpolate,limits,current_language())
         if visible and self.alpha>0:
             pixmap=QPixmap.fromImage(qimage(data["rgba"]))
             self.overlay_item=self.scene().addPixmap(pixmap);self.overlay_item.setZValue(5)
@@ -161,7 +173,7 @@ class ImageViewer(QGraphicsView):
             pen=QPen(color,1.1);pen.setCosmetic(True)
             if not usable:pen.setStyle(Qt.PenStyle.DashLine)
             info=f"{region['label']} · {self.channel}\n"+(f'{value:.5g} {self.unit}' if usable else region['reason'])
-            if region['flags']:info+='\n'+', '.join(region['flags'])
+            if region['flags']:info+='\n'+'; '.join(reason_description(flag,current_language()) for flag in region['flags'])
             box=self.scene().addRect(x,y,w,h,pen);box.setZValue(7);box.setData(0,region['id']);box.setToolTip(info);self.annotations.append(box)
             if not (0<=position[0]<=self.metadata.width and 0<=position[1]<=self.metadata.height):continue
             radius=2.5 if self.zoom_scale()<.06 else 4
@@ -174,6 +186,7 @@ class ImageViewer(QGraphicsView):
             label.setBrush(QBrush(QColor("#103d4a")));label.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIgnoresTransformations)
             label.setPos(position[0]+8,position[1]-18);label.setZValue(9);label.setData(0,region['id'])
             self.annotations.append(label)
+        for item in self.annotations:item.setVisible(self.show_annotations)
         return data
     def begin_anchors(self):
         if not self.metadata:return

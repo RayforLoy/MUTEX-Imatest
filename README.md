@@ -15,7 +15,9 @@
 
 ![简易模式：原像素斜边测量、清晰度热力图和 SFR 曲线](docs/images/simple-mode.png)
 
-*v0.7.1 实际软件界面。本文截图均来自随附的合成验证卡，不代表任何设备实测性能。*
+*简易模式截图来自 v0.7.1；下方英文深色界面来自 v0.9.0。本文截图均使用随附的合成验证卡，不代表任何设备实测性能。*
+
+![v0.9.0 English dark theme: measurement heatmap and assessment reference](docs/images/english-dark.png)
 
 <details>
 <summary>更多界面：同步比较与焦位序列</summary>
@@ -32,16 +34,16 @@
 
 ## 下载与运行
 
-前往 [GitHub Releases](https://github.com/RayforLoy/MUTEX-Imatest/releases/latest) 获取便携版。当前发布版本为 **v0.8.0**，验证环境为 **Windows 11 x64**。
+前往 [GitHub Releases](https://github.com/RayforLoy/MUTEX-Imatest/releases/latest) 获取便携版。当前发布版本为 **v0.9.0**，验证环境为 **Windows 11 x64**。
 
-v0.8.0 改进整卡 USAF 的 CTF50 / CTF20 提取，增加锐化 / 振铃光晕检测、未测得原因汇总、实时计算日志和完整错误记录。热力图保留缺失区域与有效覆盖率，完整发布包继续包含全部模板。旧结果需要重新分析才能获得新增测量。
+v0.9.0 增加跟随系统的中英文界面、浅色 / 深色主题及显示、编辑、设置菜单；测点悬停和明细提供具体失败原因，成功分析检测到锐化迹象时弹出批次汇总。USAF 新增保守的窄浅污染候选核验，修复纤维被误数为第四条线导致的异常低值，保留原始剖面和污染警告。旧结果需要重新分析才能获得修正后的测量。
 
 | 文件 | 用途 |
 | --- | --- |
-| [Windows x64 · 7z](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.8.0/MUTEX-Imatest-0.8.0-windows-x64.7z) | 体积更小，使用兼容 7z 的工具解压 |
-| [Windows x64 · ZIP](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.8.0/MUTEX-Imatest-0.8.0-windows-x64.zip) | 可使用 Windows 自带功能解压 |
-| [完整模板包](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.8.0/MUTEX-Imatest-0.8.0-templates.zip) | 单独获取全部 9 套模板；便携版已包含 |
-| [完整源码包](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.8.0/MUTEX-Imatest-0.8.0-source.zip) | 源码、全部模板资产及对应 LibRaw 原始发行包 |
+| [Windows x64 · 7z](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.9.0/MUTEX-Imatest-0.9.0-windows-x64.7z) | 体积更小，使用兼容 7z 的工具解压 |
+| [Windows x64 · ZIP](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.9.0/MUTEX-Imatest-0.9.0-windows-x64.zip) | 可使用 Windows 自带功能解压 |
+| [完整模板包](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.9.0/MUTEX-Imatest-0.9.0-templates.zip) | 单独获取全部 9 套模板；便携版已包含 |
+| [完整源码包](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.9.0/MUTEX-Imatest-0.9.0-source.zip) | 源码、全部模板资产及对应 LibRaw 原始发行包 |
 
 1. 下载任一 **Windows x64** 包，完整解压到可写目录。
 2. 双击目录中的 **`MUTEX Imatest.exe`**。无需另行安装 Python。
@@ -49,9 +51,11 @@ v0.8.0 改进整卡 USAF 的 CTF50 / CTF20 提取，增加锐化 / 振铃光晕�
 
 两个 Windows 包的内容一致，均包含 GUI、`MUTEX-CLI.exe`、全部模板、文档及许可证。请保留 `_internal` 和其余文件，直接运行解压目录中的程序；`build/` 是开发时的中间产物目录。
 
-校验文件见 [SHA256SUMS.txt](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.8.0/SHA256SUMS.txt)，大小与哈希清单见 [release-manifest.json](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.8.0/release-manifest.json)。PowerShell 可用 `Get-FileHash .\下载文件名 -Algorithm SHA256` 核对。
+校验文件见 [SHA256SUMS.txt](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.9.0/SHA256SUMS.txt)，大小与哈希清单见 [release-manifest.json](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.9.0/release-manifest.json)。PowerShell 可用 `Get-FileHash .\下载文件名 -Algorithm SHA256` 核对。
 
 ## 快速开始
+
+右上角或「显示 → 语言」可选择跟随系统、简体中文、English；「显示 → 主题」支持跟随系统、浅色和深色。界面语言与主题独立保存，不改变图像、测量参数和已有结果。
 
 1. **导入图像**：支持单张、批量队列；连续拍摄 / 扫描可使用「监视文件夹」。
 2. **选择图卡**：从带缩略图的模板列表选择，或导入自己的 SVG / PDF、编辑测量区域。
@@ -76,6 +80,7 @@ v0.8.0 改进整卡 USAF 的 CTF50 / CTF20 提取，增加锐化 / 振铃光晕�
 | 几何与纹理 | 棋盘格角点残差、径向畸变、点阵二维色差、点扩散、参考纹理与对数频率响应 |
 | 图像质量工作台 | 13 类任务：传感器、镜头标定 / 去畸变、SSIM / PSNR、视频与重复帧、采集、仿真、锐度排名、测试计划等 |
 | 模板与预览 | SVG / PDF 导入、整卡 / 局部定位、通用图案检测、模板预览与管理、口令加密导入 / 导出、90° 方向工具 |
+| 界面与设置 | 中英文即时切换、系统语言与主题跟随、浅色 / 深色、面板与测点显隐、结果复制、分析配置导入 / 导出 |
 | 锐化与诊断 | 斜边 / USAF 内部边缘的亮暗光晕、噪声下限、逐通道热力图，真实阶段日志与完整异常链 |
 | 结果与自动化 | 65 项测量参考、用户评价目标、同步比较、会话、文件监视、CLI 批处理、SQLite 测试历史、HTML / PDF / JSON / CSV / PNG |
 
@@ -174,7 +179,7 @@ Git 克隆不含两套授权图卡的派生资产；如需与便携版相同的�
 
 ### 验证与打包
 
-v0.8.0 的 **398 项自动测试**覆盖数值真值、无效数据、锐化反例和错误诊断。[Windows 构建记录](https://github.com/RayforLoy/MUTEX-Imatest/actions/workflows/build-release.yml) 保留冻结版 GUI / CLI、HTML / PDF、全部模板和格式验收流程；其工作流为手动触发发布构建。另有 8 份固定版本的官方公开示例跑通检查，此验证不等于商业软件数值等价。实际 4.23 GB TIFF、999.tif 和手机局部图卡回归在本地完成，私有输入不上传云端。
+v0.9.0 的 **438 项自动测试**覆盖数值真值、无效数据、条纹污染反例、锐化提醒、质量原因、中英文切换与主题，以及错误诊断。[Windows 构建记录](https://github.com/RayforLoy/MUTEX-Imatest/actions/workflows/build-release.yml) 保留冻结版 GUI / CLI、HTML / PDF、全部模板和格式验收流程；其工作流为手动触发发布构建。另有 8 份固定版本的官方公开示例跑通检查，此验证不等于商业软件数值等价。实际 4.23 GB TIFF 在严格与相对调焦策略下均完成本地回归；既有 999.tif 和手机局部图卡记录的版本与范围见验证文档，私有输入不上传云端。
 
 ```powershell
 .\.venv\Scripts\python.exe -m pytest --junitxml=validation/pytest.xml

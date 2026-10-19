@@ -18,23 +18,26 @@ class MetricDelegate(QStyledItemDelegate):
             return True
         return super().helpEvent(event,view,option,index)
     def paint(self,painter,option,index):
+        from .style import chrome_colors
+        from .i18n import tr
+        colors=chrome_colors()
         enabled=bool(index.flags() & Qt.ItemFlag.ItemIsEnabled)
         selected=enabled and bool(option.state & QStyle.StateFlag.State_Selected)
-        painter.save();painter.fillRect(option.rect,QColor('#d5efec' if selected else '#ffffff' if enabled else DISABLED_BACKGROUND))
+        painter.save();painter.fillRect(option.rect,QColor(colors['selected'] if selected else colors['base'] if enabled else colors['disabled_base']))
         left=option.rect.left()+30
         if index.flags() & Qt.ItemFlag.ItemIsUserCheckable:
             checkbox=QStyleOptionButton();checkbox.rect=option.rect.adjusted(7,13,0,0);checkbox.rect.setSize(QSize(16,16))
             checkbox.state=(QStyle.StateFlag.State_Enabled if enabled else QStyle.StateFlag.State_None) | (QStyle.StateFlag.State_On if index.data(Qt.ItemDataRole.CheckStateRole)==Qt.CheckState.Checked.value else QStyle.StateFlag.State_Off)
             QApplication.style().drawControl(QStyle.ControlElement.CE_CheckBox,checkbox,painter)
         else:left=option.rect.left()+10
-        painter.setPen(QColor(ENABLED_TEXT if enabled else DISABLED_TEXT));font=QFont(option.font);font.setBold(enabled);painter.setFont(font)
+        painter.setPen(QColor(colors['enabled'] if enabled else colors['disabled']));font=QFont(option.font);font.setBold(enabled);painter.setFont(font)
         activity=index.data(ACTIVITY_ROLE) or {}
         line=option.rect.adjusted(left-option.rect.left(),3,-27 if activity else -7,-21)
         painter.drawText(line,Qt.AlignmentFlag.AlignVCenter,painter.fontMetrics().elidedText(str(index.data() or ''),Qt.TextElideMode.ElideRight,line.width()))
-        font.setBold(False);font.setPixelSize(10);painter.setFont(font);painter.setPen(QColor('#617986' if enabled else DISABLED_TEXT))
+        font.setBold(False);font.setPixelSize(10);painter.setFont(font);painter.setPen(QColor(colors['secondary'] if enabled else colors['disabled']))
         line=option.rect.adjusted(left-option.rect.left(),22,-7,-2)
         text=activity.get('text') or index.data(STATUS_ROLE) or ''
-        painter.drawText(line,Qt.AlignmentFlag.AlignVCenter,painter.fontMetrics().elidedText(text,Qt.TextElideMode.ElideRight,line.width()))
+        painter.drawText(line,Qt.AlignmentFlag.AlignVCenter,painter.fontMetrics().elidedText(tr(text),Qt.TextElideMode.ElideRight,line.width()))
         state=activity.get('state')
         if state in {'running','cancelling'}:
             painter.setRenderHint(painter.RenderHint.Antialiasing)
@@ -123,9 +126,10 @@ class MetricChecklist(QListView):
         self._updating=True;self.model().item(index).setData(status,STATUS_ROLE);self._updating=False
     def tooltip_text(self,index):
         import html
+        from .i18n import tr,metric_description
         esc=lambda value:html.escape(str(value),quote=True)
         item=self.model().item(index);key=self.itemData(index)
-        description=METRIC_DESCRIPTIONS.get(key,'查看该分析的测量结果和质量标志。')
+        description=metric_description(key)
         reason=item.toolTip() or ('可用' if item.isEnabled() else '当前模板不支持此分析')
         status=item.data(STATUS_ROLE) or ''
         extra=f'<p>结果状态：{esc(status)}</p>' if status and status!=reason else ''
@@ -133,4 +137,4 @@ class MetricChecklist(QListView):
         if activity:extra+=f'<p>{esc(activity["text"])}：{esc(activity.get("message", ""))}<br>百分比为本图共用测量作业的进度。</p>'
         from ..evaluation_catalog import reference_text
         extra+='<p>'+esc(reference_text(key)).replace('\n','<br>')+'</p>'
-        return f'<qt><b>{esc(item.text())}</b><p>{esc(description)}</p><p>可用条件：{esc(reason)}</p>{extra}</qt>'
+        return tr(f'<qt><b>{esc(item.text())}</b><p>{esc(description)}</p><p>可用条件：{esc(reason)}</p>{extra}</qt>')

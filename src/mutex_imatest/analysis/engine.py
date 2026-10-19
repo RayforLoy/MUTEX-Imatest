@@ -13,7 +13,7 @@ from .sfr import slanted_edge
 from .targets import usaf,star
 from .extra import flat_field,step_patch,color_patch,point_spread,texture,grid_geometry
 
-ALGORITHM_VERSION="mutex-native-2026.10.19-halo-audit-v1"
+ALGORITHM_VERSION="mutex-native-2026.10.19-profile-artifact-v2"
 def analyze(path,chart,config=None,cancel=None,progress=None,focus_position=None,focus_unit=None):
     config=(config or AnalysisConfig()).validate()
     progress=progress or (lambda *a:None)

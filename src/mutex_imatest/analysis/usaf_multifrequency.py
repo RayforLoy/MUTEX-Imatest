@@ -17,7 +17,7 @@ from .preprocess import linearize,clipping_fraction
 from .rgb_registration import estimate_translation,align_gray
 from .targets import usaf_frequency
 
-VERSION="mutex-usaf-multifrequency-2026.10.19-v4"
+VERSION="mutex-usaf-multifrequency-2026.10.19-v5"
 
 
 def is_multifrequency(chart):
@@ -32,6 +32,25 @@ def _peak_vertex(profile,index,interpolate):
     curvature=a-2*b+c
     delta=float(np.clip(.5*(a-c)/curvature,-.5,.5)) if abs(curvature)>1e-12 else 0.
     return index+delta,float(b+.5*(c-a)*delta+.5*curvature*delta**2)
+
+
+def _separate_minor_artifacts(minima,properties,frequency,profile_length):
+    """Reject only narrow, shallow extra troughs beside a verified native triplet.
+
+    A hair in a white gap can create a fourth minimum without making the three
+    actual black bars unresolvable. Never remove comparable bars, broad defects,
+    high-frequency revivals or missing bars, and never alter the input profile.
+    """
+    if not 3<len(minima)<=5 or frequency>=.06:return minima,np.array([],dtype=int)
+    prominence=properties['prominences'];width=properties['widths']
+    keep=np.sort(np.argsort(prominence)[-3:]);drop=np.setdiff1d(np.arange(len(minima)),keep)
+    primary=minima[keep];period=1/frequency
+    geometry=(np.max(np.abs(np.diff(primary)*frequency-1))<=.3 and
+              abs(np.mean(primary)-(profile_length-1)/2)*frequency<=.35)
+    full_bars=np.all((width[keep]>=.25*period)&(width[keep]<=.8*period))
+    minor=(np.all(prominence[drop]<=.25*np.min(prominence[keep])) and
+           np.all(width[drop]<=.2*period) and np.all((minima[drop]>primary[0])&(minima[drop]<primary[-1])))
+    return (primary,minima[drop]) if geometry and full_bars and minor else (minima,np.array([],dtype=int))
 
 
 def measure_bars(image,frequency,minimum_contrast=.03,profile_band=None):
@@ -57,11 +76,17 @@ def measure_bars(image,frequency,minimum_contrast=.03,profile_band=None):
     difference=np.diff(samples,axis=0)
     difference-=np.median(difference,axis=1,keepdims=True)
     noise=float(np.median(np.abs(difference))/(.67448975*np.sqrt(2*len(samples))))
-    minima,_=find_peaks(-p,prominence=max((background-foreground)*.12,minimum_contrast*.1,4*noise),distance=max(1,int(.5/frequency)))
+    minima,peak_properties=find_peaks(-p,prominence=max((background-foreground)*.12,minimum_contrast*.1,4*noise),distance=max(1,int(.5/frequency)),width=0)
     minima+=trim
+    raw_minima=minima.copy()
+    minima,rejected=_separate_minor_artifacts(minima,peak_properties,frequency,len(profile))
     values={"ctf":None,"contrast_at_frequency":None,"roi_contrast":roi_contrast,
-            "detected_bar_count":int(len(minima)),"target_frequency":float(frequency),"profile_noise_sigma":noise}
-    flags=[]
+            "detected_bar_count":int(len(minima)),"raw_detected_bar_count":int(len(raw_minima)),
+            "rejected_artifact_count":int(len(rejected)),"target_frequency":float(frequency),"profile_noise_sigma":noise}
+    curve.update(raw_dark_peak_x=raw_minima.tolist(),raw_dark_peak_prominence=peak_properties['prominences'].tolist(),
+                 raw_dark_peak_width_px=peak_properties['widths'].tolist(),rejected_artifact_x=rejected.tolist())
+    flags=['profile_contamination'] if len(rejected) else []
+    if len(rejected):curve['artifact_rejection_rule']='Native-profile minor trough: <0.06 cy/px; 3 dominant bars with verified period/center and 0.25–0.8 period width; extra internal troughs <=25% prominence and <=0.2 period width. Pixels unchanged.'
     if len(minima)!=3:flags.append("bars_not_separated")
     else:
         # Extrema are found in the measured profile, not at prescribed phase
@@ -146,6 +171,7 @@ def summarize_curve(rows,threshold=.2,mode="relative",scale=None,height=1):
     if any("clipping_advisory" in m.flags for m in rows):flags.append("clipping_advisory")
     if any("clipped" in m.flags for m in rows):flags.append("strict_clipping_limits_curve")
     if any("transfer_unknown" in m.flags for m in rows):flags.append("transfer_unknown")
+    if any('profile_contamination' in m.flags for m in rows):flags.append('profile_contamination')
     def crossing(key,t):
         previous=None
         for i,value in enumerate(ctf_envelope):
@@ -170,7 +196,9 @@ def summarize_curve(rows,threshold=.2,mode="relative",scale=None,height=1):
         crossing_status[key]=stop_reason or ('clipped_bracket_unavailable' if any('clipped' in m.flags for m in rows) else 'above_highest_test_frequency')
         return None
     values={"reference_ctf":baseline,"sampled_frequency_count":len(frequencies),"resolution_upper_bound":first_failure,
-            "ctf_threshold":threshold,"test_pass_fraction":float(np.mean(passing))}
+            "ctf_threshold":threshold,"test_pass_fraction":float(np.mean(passing)),
+            "rejected_artifact_count":sum(m.values.get('rejected_artifact_count',0) for m in rows),
+            "profile_contaminated_frequency_count":sum('profile_contamination' in m.flags for m in rows)}
     values.update(frequency_values("resolution_limit",last_pass,scale,height))
     for key,t in [("ctf50",.5),("ctf20",.2),("ctf10",.1)]:values.update(frequency_values(key,crossing(key,t),scale,height))
     if any(s['after_excluded_clipping'] for s in crossing_support.values()):flags.append('ctf_segment_after_clipping')
@@ -327,6 +355,7 @@ def analyze_whole_chart(source,chart,config,H,registration,cancel=None,progress=
                 limits=[r["values"].get("resolution_limit_lp_mm") or r["values"]["resolution_limit"] for r in valid]
                 values["resolution_anisotropy"]=max(limits)/max(min(limits),1e-12)
                 values["usaf_focus_score"]=min(r["values"]["usaf_focus_score"] for r in valid)
+                if any('profile_contamination' in r['flags'] for r in valid) and 'profile_contamination' not in flags:flags.append('profile_contamination')
             else:
                 values={};flags=[location_flag] if not located else list(dict.fromkeys(['directional_resolution_incomplete']+[flag for r in candidates for flag in r['flags']]))
                 confidence=0
@@ -356,6 +385,7 @@ def analyze_whole_chart(source,chart,config,H,registration,cancel=None,progress=
                             "shift_sign":"R/B feature position minus G; alignment samples R/B at x+dx, y+dy.",
                             "gray":"Weighted RGB in the selected transfer domain; not a calibrated colorimetric luminance.",
                             "focus":"A single image supplies current response only. Best focus requires a bracketed focus sequence."}}
+    summary['definitions']['profile_contamination']='Narrow, shallow extra profile troughs may be excluded only beside a geometrically verified, dominant low-frequency three-bar triplet. Original pixels, candidate troughs and exclusion diagnostics are retained; contaminated measurements carry a warning. Comparable fourth bars, broad occlusion and high-frequency failures are not recovered.'
     summary["quality_counts"]=dict(Counter(f for m in output if m.kind=="usaf_summary" and m.direction_deg is None for f in m.flags))
     summary["statistics"]={}
     summary['best_current_location']={}
