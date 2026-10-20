@@ -77,8 +77,8 @@ def ctf_svg(record,calibrated=True,raw=False,width=680,height=250):
     return ''.join(parts)
 
 def _font(size):
-    try:return ImageFont.truetype('C:/Windows/Fonts/msyh.ttc',size)
-    except OSError:return ImageFont.load_default()
+    from .fonts import pillow_font
+    return pillow_font(size)
 
 def create_assets(result,preview,folder):
     folder=Path(folder);folder.mkdir(parents=True,exist_ok=True);assets={}

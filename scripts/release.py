@@ -45,10 +45,13 @@ def main():
     for directory in ["src","tests","docs","scripts","licenses","template"]:
         for file in (ROOT/directory).rglob("*"):
             if file.is_file() and file.name not in {"validate_asset_pack.py","analyze_999_scan.py"} and not any(x in file.parts for x in ["__pycache__",".pytest_cache","mutex_imatest.egg-info"]):files.append(file)
-    files.extend(ROOT/name for name in ["README.md","LICENSE","THIRD_PARTY_NOTICES.md","pyproject.toml","requirements-lock.txt","MUTEX.spec",".gitignore",".gitattributes","启动 MUTEX Imatest.cmd"])
+    files.extend(ROOT/name for name in ["README.md","LICENSE","THIRD_PARTY_NOTICES.md","pyproject.toml","requirements-lock.txt","requirements-macos.txt","requirements-macos-build.txt","MUTEX.spec","MUTEX-macos.spec",".gitignore",".gitattributes","启动 MUTEX Imatest.cmd"])
     with zipfile.ZipFile(ROOT/"dist"/f"MUTEX-Imatest-{VERSION}-source.zip","w",zipfile.ZIP_DEFLATED,compresslevel=ns.compresslevel) as z:
         for file in sorted(files):z.write(file,file.relative_to(ROOT))
         z.write(source,Path("third-party-source")/source.name,compress_type=zipfile.ZIP_STORED)
+        for name in ['LibRaw-0.22.2.tar.gz','rawpy-0.27.1.tar.gz']:
+            additional=ROOT/'third-party-source'/name
+            if additional.is_file():z.write(additional,Path('third-party-source')/name,compress_type=zipfile.ZIP_STORED)
         if audit.exists():z.write(audit,'release-checks.json')
         if bundled.is_dir() and not bundled.is_relative_to(ROOT/'template'):
             for file in sorted(bundled.rglob('*')):

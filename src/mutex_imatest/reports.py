@@ -132,8 +132,8 @@ def export_overlay(result,preview,path,metric="mtf50",channel="G",unit="cy/px",a
     overlay=Image.fromarray(data["rgba"],"RGBA")
     image=Image.alpha_composite(image,overlay)
     draw=ImageDraw.Draw(image)
-    try:font=ImageFont.truetype("C:/Windows/Fonts/msyh.ttc",max(12,image.width//110))
-    except OSError:font=ImageFont.load_default()
+    from .fonts import pillow_font
+    font=pillow_font(max(12,image.width//110))
     for point,value in zip(data["points"],data["values"]):
         x=point[0]*image.width/result.image.width;y=point[1]*image.height/result.image.height
         draw.ellipse((x-5,y-5,x+5,y+5),fill="white",outline="#1b394c",width=2)

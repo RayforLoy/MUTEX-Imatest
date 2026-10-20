@@ -1,0 +1,18 @@
+[
+  {
+    "id": 3480,
+    "device": "Sony A7R IV compressed",
+    "filename": "3480.ARW",
+    "url": "https://raw.pixls.us/getfile.php/3480/nice/Sony%20-%20ILCE-7RM4%20-%2014bit%2014bit%20compressed%20%283:2%29.ARW",
+    "sha256": "e6dafe42643f69ab9d1fd00414b7a1f5104df354bb589201600ac934b29b5e4a",
+    "license": "CC0-1.0"
+  },
+  {
+    "id": 983,
+    "device": "Canon 5D Mark IV",
+    "filename": "983.CR2",
+    "url": "https://raw.pixls.us/getfile.php/983/nice/Canon%20-%20EOS%205D%20Mark%20IV%20-%20RAW%20%283:2%29.CR2",
+    "sha256": "02b23f9cc6dc4c99fb39aa4d1f65ac227804d06461ac1bd0f842aa2f3beb8fe4",
+    "license": "CC0-1.0"
+  }
+]

@@ -83,8 +83,8 @@ def generate_demo(directory,series=True):
     # Thumbnail is a public synthetic chart, not the user's private source.
     image=Image.fromarray(to_rgb8(generate_frame(chart,.2)[0],linear=True))
     draw=ImageDraw.Draw(image)
-    try:font=ImageFont.truetype("C:/Windows/Fonts/msyh.ttc",16)
-    except OSError:font=ImageFont.load_default()
+    from .fonts import pillow_font
+    font=pillow_font(16)
     for region in chart.regions:
         x,y,bw,bh=region.box
         draw.text((int(x*1600),max(0,int(y*1200)-26)),region.label,fill=(35,60,72),font=font)

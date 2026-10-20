@@ -20,6 +20,7 @@ validation/
 tmp/
 local-archive/
 vendor/
+third-party-source/
 *.lnk
 *.log
 scripts/analyze_999_scan.py

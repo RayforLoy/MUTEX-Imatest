@@ -2,7 +2,7 @@
 
 **面向扫描仪与相机翻拍的离线调焦、光学测量与图像质量分析工具。**
 
-[![Release](https://img.shields.io/github/v/release/RayforLoy/MUTEX-Imatest?color=0f7b82&label=release)](https://github.com/RayforLoy/MUTEX-Imatest/releases/latest) [![Platform](https://img.shields.io/badge/platform-Windows_x64-0078d4)](https://github.com/RayforLoy/MUTEX-Imatest/releases/latest) [![Python](https://img.shields.io/badge/python-3.12%2B-3776ab)](pyproject.toml) [![License](https://img.shields.io/badge/license-GPL--3.0--or--later-blue)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/RayforLoy/MUTEX-Imatest?color=0f7b82&label=release)](https://github.com/RayforLoy/MUTEX-Imatest/releases/latest) [![Platform](https://img.shields.io/badge/platform-Windows_x64_%7C_macOS-0078d4)](https://github.com/RayforLoy/MUTEX-Imatest/releases/latest) [![Python](https://img.shields.io/badge/python-3.12%2B-3776ab)](pyproject.toml) [![License](https://img.shields.io/badge/license-GPL--3.0--or--later-blue)](LICENSE)
 
 [下载与运行](#下载与运行) · [快速开始](#快速开始) · [功能概览](#功能概览) · [图卡模板](#图卡模板) · [开发与构建](#开发与构建) · [文档](#文档)
 
@@ -34,7 +34,7 @@
 
 ## 下载与运行
 
-前往 [GitHub Releases](https://github.com/RayforLoy/MUTEX-Imatest/releases/latest) 获取便携版。当前发布版本为 **v0.9.2**，验证环境为 **Windows 11 x64**。
+前往 [GitHub Releases](https://github.com/RayforLoy/MUTEX-Imatest/releases/latest) 获取便携版。当前发布版本为 **v0.9.2**，提供 **Windows x64** 及 **macOS 15+（Apple Silicon / Intel）** 便携包。
 
 v0.9.2 修复倒置、裁切的重复 USAF 图卡自动配准：所有通过几何检查的方向 / 行偏移候选都会核对标尺与文字，不再因粗条纹匹配数稍少而提前丢弃正确方向。局部定位、三线分离和 CTF 质量门槛保持不变。升级后请对之前失败的图像重新分析。
 
@@ -44,12 +44,16 @@ v0.9.1 新增「调焦卡_135x1」，原「调焦卡_x1」更名为「调焦卡_
 | --- | --- |
 | [Windows x64 · 7z](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.9.2/MUTEX-Imatest-0.9.2-windows-x64.7z) | 体积更小，使用兼容 7z 的工具解压 |
 | [Windows x64 · ZIP](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.9.2/MUTEX-Imatest-0.9.2-windows-x64.zip) | 可使用 Windows 自带功能解压 |
+| [macOS · Apple Silicon](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.9.2/MUTEX-Imatest-0.9.2-macos-arm64.zip) | M 系列 Mac，macOS 15+，内含 App 与全部模板 |
+| [macOS · Intel](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.9.2/MUTEX-Imatest-0.9.2-macos-x86_64.zip) | Intel Mac，macOS 15+，内含 App 与全部模板 |
 | [完整模板包](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.9.2/MUTEX-Imatest-0.9.2-templates.zip) | 单独获取全部 10 套模板；便携版已包含 |
 | [完整源码包](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.9.2/MUTEX-Imatest-0.9.2-source.zip) | 源码、全部模板资产及对应 LibRaw 原始发行包 |
 
 1. 下载任一 **Windows x64** 包，完整解压到可写目录。
 2. 双击目录中的 **`MUTEX Imatest.exe`**。无需另行安装 Python。
 3. 第一次使用可点击 **「合成示例」**，体验 9 个焦位的分析流程。
+
+macOS 包完整解压后，将 `MUTEX Imatest.app` 拖入「应用程序」并启动。Mac 包采用 ad-hoc 签名，尚无 Apple Developer ID 签名 / 公证；首次运行的系统提示、命令行入口与独立验收范围见 [macOS 指南](docs/MACOS.md)。
 
 两个 Windows 包的内容一致，均包含 GUI、`MUTEX-CLI.exe`、全部模板、文档及许可证。请保留 `_internal` 和其余文件，直接运行解压目录中的程序；`build/` 是开发时的中间产物目录。
 
@@ -160,6 +164,8 @@ py -3.12 -m venv .venv
 
 锁文件包含本项目的可编辑安装及开发 / 报告依赖。`upgrade_libraw.py` 获取官方 LibRaw 0.22.2 发行包、检查符号并替换当前虚拟环境的 DLL；重装 rawpy 后应重跑升级与 RAW 验收。依赖下载完成后，日常分析可离线运行。
 
+macOS 源码构建使用 `requirements-macos.txt`、`MUTEX-macos.spec` 和本架构编译的 LibRaw，见 [macOS 构建](docs/MACOS.md#构建与验收)。
+
 Git 克隆不含三套授权图卡的派生资产；如需与便携版相同的完整模板集，使用完整源码 Release 包。私有原图卡不会随任何源码包提供。
 
 ### 命令行
@@ -181,7 +187,7 @@ Git 克隆不含三套授权图卡的派生资产；如需与便携版相同的�
 
 ### 验证与打包
 
-v0.9.2 的 **446 项自动测试**覆盖数值真值、无效数据、条纹污染反例、锐化提醒、质量原因、中英文切换与主题，以及大 SVG、非零起始频率、旧模板关联和缓存边界，以及正确倒置方向被多个错误重复行候选挤出的问题。[Windows 构建记录](https://github.com/RayforLoy/MUTEX-Imatest/actions/workflows/build-release.yml) 保留冻结版 GUI / CLI、HTML / PDF、全部模板和格式验收流程；其工作流为手动触发发布构建。另有 8 份固定版本的官方公开示例跑通检查，此验证不等于商业软件数值等价。实际 4.23 GB TIFF 在严格与相对调焦策略下均完成本地回归；既有 999.tif 和手机局部图卡记录的版本与范围见验证文档，私有输入不上传云端。
+v0.9.2 的 **446 项自动测试**覆盖数值真值、无效数据、条纹污染反例、锐化提醒、质量原因、中英文切换与主题，以及大 SVG、非零起始频率、旧模板关联和缓存边界，以及正确倒置方向被多个错误重复行候选挤出的问题。[Windows 构建记录](https://github.com/RayforLoy/MUTEX-Imatest/actions/workflows/build-release.yml) 保留冻结版 GUI / CLI、HTML / PDF、全部模板和格式验收流程；Windows 与两个 Mac 架构均为手动触发发布构建；Mac 从最终 ZIP 解压后运行 Cocoa 窗口、模板、报告、格式与公开 RAW 验收，其记录随架构单独提供。另有 8 份固定版本的官方公开示例跑通检查，此验证不等于商业软件数值等价。实际 4.23 GB TIFF 在严格与相对调焦策略下均完成本地回归；既有 999.tif 和手机局部图卡记录的版本与范围见验证文档，私有输入不上传云端。
 
 ```powershell
 .\.venv\Scripts\python.exe -m pytest --junitxml=validation/pytest.xml

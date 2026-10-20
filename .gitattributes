@@ -5,6 +5,7 @@
 *.jpg binary
 *.jpeg binary
 *.ico binary
+*.icns binary
 *.pdf binary
 *.zip binary
 *.mchart binary
