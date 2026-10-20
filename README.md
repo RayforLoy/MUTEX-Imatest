@@ -34,16 +34,18 @@
 
 ## 下载与运行
 
-前往 [GitHub Releases](https://github.com/RayforLoy/MUTEX-Imatest/releases/latest) 获取便携版。当前发布版本为 **v0.9.1**，验证环境为 **Windows 11 x64**。
+前往 [GitHub Releases](https://github.com/RayforLoy/MUTEX-Imatest/releases/latest) 获取便携版。当前发布版本为 **v0.9.2**，验证环境为 **Windows 11 x64**。
+
+v0.9.2 修复倒置、裁切的重复 USAF 图卡自动配准：所有通过几何检查的方向 / 行偏移候选都会核对标尺与文字，不再因粗条纹匹配数稍少而提前丢弃正确方向。局部定位、三线分离和 CTF 质量门槛保持不变。升级后请对之前失败的图像重新分析。
 
 v0.9.1 新增「调焦卡_135x1」，原「调焦卡_x1」更名为「调焦卡_120x1」并保留旧 ID 与会话关联。135 模板包含 276 个 USAF 单元和 19320 个双向频点区域；完整发布包共 10 套模板。导入支持较大的 SVG 和不含 0 组的缩小图卡，继续核验三线几何，默认未确认实物标定。中英文、深浅主题、质量原因与锐化提醒继续提供。
 
 | 文件 | 用途 |
 | --- | --- |
-| [Windows x64 · 7z](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.9.1/MUTEX-Imatest-0.9.1-windows-x64.7z) | 体积更小，使用兼容 7z 的工具解压 |
-| [Windows x64 · ZIP](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.9.1/MUTEX-Imatest-0.9.1-windows-x64.zip) | 可使用 Windows 自带功能解压 |
-| [完整模板包](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.9.1/MUTEX-Imatest-0.9.1-templates.zip) | 单独获取全部 10 套模板；便携版已包含 |
-| [完整源码包](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.9.1/MUTEX-Imatest-0.9.1-source.zip) | 源码、全部模板资产及对应 LibRaw 原始发行包 |
+| [Windows x64 · 7z](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.9.2/MUTEX-Imatest-0.9.2-windows-x64.7z) | 体积更小，使用兼容 7z 的工具解压 |
+| [Windows x64 · ZIP](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.9.2/MUTEX-Imatest-0.9.2-windows-x64.zip) | 可使用 Windows 自带功能解压 |
+| [完整模板包](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.9.2/MUTEX-Imatest-0.9.2-templates.zip) | 单独获取全部 10 套模板；便携版已包含 |
+| [完整源码包](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.9.2/MUTEX-Imatest-0.9.2-source.zip) | 源码、全部模板资产及对应 LibRaw 原始发行包 |
 
 1. 下载任一 **Windows x64** 包，完整解压到可写目录。
 2. 双击目录中的 **`MUTEX Imatest.exe`**。无需另行安装 Python。
@@ -51,7 +53,7 @@ v0.9.1 新增「调焦卡_135x1」，原「调焦卡_x1」更名为「调焦卡_
 
 两个 Windows 包的内容一致，均包含 GUI、`MUTEX-CLI.exe`、全部模板、文档及许可证。请保留 `_internal` 和其余文件，直接运行解压目录中的程序；`build/` 是开发时的中间产物目录。
 
-校验文件见 [SHA256SUMS.txt](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.9.1/SHA256SUMS.txt)，大小与哈希清单见 [release-manifest.json](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.9.1/release-manifest.json)。PowerShell 可用 `Get-FileHash .\下载文件名 -Algorithm SHA256` 核对。
+校验文件见 [SHA256SUMS.txt](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.9.2/SHA256SUMS.txt)，大小与哈希清单见 [release-manifest.json](https://github.com/RayforLoy/MUTEX-Imatest/releases/download/v0.9.2/release-manifest.json)。PowerShell 可用 `Get-FileHash .\下载文件名 -Algorithm SHA256` 核对。
 
 ## 快速开始
 
@@ -179,7 +181,7 @@ Git 克隆不含三套授权图卡的派生资产；如需与便携版相同的�
 
 ### 验证与打包
 
-v0.9.1 的 **445 项自动测试**覆盖数值真值、无效数据、条纹污染反例、锐化提醒、质量原因、中英文切换与主题，以及大 SVG、非零起始频率、旧模板关联和缓存边界。[Windows 构建记录](https://github.com/RayforLoy/MUTEX-Imatest/actions/workflows/build-release.yml) 保留冻结版 GUI / CLI、HTML / PDF、全部模板和格式验收流程；其工作流为手动触发发布构建。另有 8 份固定版本的官方公开示例跑通检查，此验证不等于商业软件数值等价。实际 4.23 GB TIFF 在严格与相对调焦策略下均完成本地回归；既有 999.tif 和手机局部图卡记录的版本与范围见验证文档，私有输入不上传云端。
+v0.9.2 的 **446 项自动测试**覆盖数值真值、无效数据、条纹污染反例、锐化提醒、质量原因、中英文切换与主题，以及大 SVG、非零起始频率、旧模板关联和缓存边界，以及正确倒置方向被多个错误重复行候选挤出的问题。[Windows 构建记录](https://github.com/RayforLoy/MUTEX-Imatest/actions/workflows/build-release.yml) 保留冻结版 GUI / CLI、HTML / PDF、全部模板和格式验收流程；其工作流为手动触发发布构建。另有 8 份固定版本的官方公开示例跑通检查，此验证不等于商业软件数值等价。实际 4.23 GB TIFF 在严格与相对调焦策略下均完成本地回归；既有 999.tif 和手机局部图卡记录的版本与范围见验证文档，私有输入不上传云端。
 
 ```powershell
 .\.venv\Scripts\python.exe -m pytest --junitxml=validation/pytest.xml

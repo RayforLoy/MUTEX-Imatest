@@ -152,7 +152,11 @@ def _global_oriented(chart,source,preview,quarter_turns):
     xx=np.arange(preview.shape[1])[None,:]
     ruler_mask=(xx<x_centers[0]-7*p0)|(xx>x_centers[-1]+7*p0)
     scored=[]
-    for matched,residual,H in sorted(hypotheses.values(),key=lambda a:(-a[0],a[1]))[:16]:
+    # Repeated rows can yield many translations with nearly identical counts.
+    # A cropped/rotated card may have slightly fewer coarse matches than a
+    # wrong orientation, so pruning by count before checking ruler ink can
+    # discard every correct orientation. Score all geometrically viable fits.
+    for matched,residual,H in sorted(hypotheses.values(),key=lambda a:(-a[0],a[1])):
         check_cancel(getattr(source,"cancel",None))
         warp=H@np.diag([1/ref.shape[1],1/ref.shape[0],1])
         expected=cv2.warpPerspective(ref,warp,(preview.shape[1],preview.shape[0]),borderValue=255)
