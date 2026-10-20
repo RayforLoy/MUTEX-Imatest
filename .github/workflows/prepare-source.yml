@@ -1,0 +1,32 @@
+name: Assemble common release source
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        required: true
+        default: v0.9.2
+      release_id:
+        required: true
+      base_source_sha256:
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      RELEASE_ID: ${{ inputs.release_id }}
+      RELEASE_TAG: ${{ inputs.tag }}
+      BASE_SOURCE_SHA256: ${{ inputs.base_source_sha256 }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12.9'
+      - name: Assemble and verify the current source with all templates
+        run: python scripts/assemble_release_source.py

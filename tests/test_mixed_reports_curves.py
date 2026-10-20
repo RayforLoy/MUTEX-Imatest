@@ -1,6 +1,7 @@
 """Real native mixed-target curves survive offline HTML/PDF export unchanged."""
 import copy
 import json
+from pdf_text_utils import normalize_pdf_text
 from collections import Counter
 from html.parser import HTMLParser
 import numpy as np
@@ -75,12 +76,12 @@ def test_pdf_renders_all_native_curve_types_and_does_not_allocate_empty_roi_page
     target=export_pdf(result,preview,tmp_path/'mixed.pdf')
     document=QPdfDocument(None);assert document.load(str(target))==QPdfDocument.Error.None_
     base_pages=document.pageCount()
-    text='\n'.join(document.getAllText(page).text() for page in range(base_pages))
+    text=normalize_pdf_text('\n'.join(document.getAllText(page).text() for page in range(base_pages)))
     for key in ['sfr','esf','lsf','star','star_contrast','star_coherence','wedge','wedge_contrast','wedge_coherence','wedge_separation','wedge_bar_count','wedge_expected_bars',*[f'star_sector_{i}' for i in range(8)]]:
         assert curve_name(key) in text
     assert 'cy/px' in text and 'signal/px' in text and 'R' in text and 'Y' in text
     assert 'relative_response' in text and base_pages>=5
-    curve_page=next(page for page in range(base_pages) if '斜边 SFR' in document.getAllText(page).text())
+    curve_page=next(page for page in range(base_pages) if '斜边 SFR' in normalize_pdf_text(document.getAllText(page).text()))
     rendered=document.render(curve_page,QSize(850,1200))
     pixels=np.frombuffer(rendered.bits(),dtype=np.uint8).reshape(rendered.height(),rendered.bytesPerLine()//4,4)[...,:3].astype(int)
     # Qt PDF rendering uses BGRA. Hundreds of colored pixels beyond the small
@@ -97,7 +98,7 @@ def test_pdf_renders_all_native_curve_types_and_does_not_allocate_empty_roi_page
     crop_target=export_pdf(cropped,preview,tmp_path/'cropped.pdf')
     assert document.load(str(crop_target))==QPdfDocument.Error.None_
     crop_pages=document.pageCount()
-    crop_text='\n'.join(document.getAllText(page).text() for page in range(crop_pages))
+    crop_text=normalize_pdf_text('\n'.join(document.getAllText(page).text() for page in range(crop_pages)))
     assert '星图不可见 191' in crop_text and 'roi_outside' in crop_text
     assert crop_pages<base_pages+16
     assert crop_text.count('原生曲线 ·')==text.count('原生曲线 ·')

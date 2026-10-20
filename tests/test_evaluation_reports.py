@@ -2,6 +2,7 @@
 import copy
 import csv
 import json
+from pdf_text_utils import normalize_pdf_text
 from html.parser import HTMLParser
 
 import pytest
@@ -34,7 +35,8 @@ def pdf_text(path):
     document = QPdfDocument(None)
     assert document.load(str(path)) == QPdfDocument.Error.None_
     pages = document.pageCount()
-    text = '\n'.join(document.getAllText(page).text() for page in range(pages))
+    # CoreText may map visually identical CJK glyphs to compatibility radicals.
+    text = normalize_pdf_text('\n'.join(document.getAllText(page).text() for page in range(pages)))
     document.close()
     return text, pages
 

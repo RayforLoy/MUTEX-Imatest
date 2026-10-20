@@ -31,6 +31,26 @@ def main():
     assert gui.is_file() and cli.is_file() and os.access(gui, os.X_OK) and os.access(cli, os.X_OK)
     assert arch in subprocess.check_output(['lipo', '-archs', str(gui)], text=True).split()
     subprocess.run(['codesign', '--verify', '--deep', '--strict', str(app)], check=True)
+    # A successful launch on the build host alone can hide Homebrew linkage.
+    # Every Mach-O dependency must be bundled/relative or an Apple system lib.
+    macho = []
+    seen = set()
+    for path in app.rglob('*'):
+        if not path.is_file() or path.resolve() in seen:
+            continue
+        seen.add(path.resolve())
+        with path.open('rb') as stream:
+            magic = stream.read(4)
+        if magic not in [b'\xcf\xfa\xed\xfe', b'\xfe\xed\xfa\xcf', b'\xca\xfe\xba\xbe', b'\xbe\xba\xfe\xca']:
+            continue
+        dependencies = subprocess.check_output(['otool', '-L', str(path)], text=True).splitlines()[1:]
+        for line in dependencies:
+            if not line.startswith(('\t', ' ')):
+                continue
+            dependency = line.strip().split(' (compatibility', 1)[0]
+            assert dependency.startswith(('@', '/usr/lib/', '/System/Library/')), (path, dependency)
+        macho.append(str(path.relative_to(app)))
+    assert len(macho) > 10
     with (app / 'Contents/Info.plist').open('rb') as stream:
         info = plistlib.load(stream)
     assert info['CFBundleShortVersionString'] == version and info['LSMinimumSystemVersion'] == '15.0'
@@ -99,6 +119,7 @@ def main():
              'raw_scope': 'Sony A7R IV compressed and Canon 5D IV CC0 files checked on this architecture; other camera modes retain their separate acceptance scope.',
              'native_build': json.loads((ROOT / 'validation/macos-native.json').read_text()),
              'codesign_verified_after_zip': True, 'apple_notarized': False}
+    audit['portable_macho_dependency_check'] = {'passed': True, 'binaries_checked': len(macho)}
     (ROOT / 'dist' / f'macos-{arch}-checks.json').write_text(json.dumps(audit, ensure_ascii=False, indent=2), encoding='utf-8')
     print('Native app ZIP, GUI, CLI, all ten templates, reports and public RAW checks passed.', flush=True)
 

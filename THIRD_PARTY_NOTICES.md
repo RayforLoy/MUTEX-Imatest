@@ -16,6 +16,13 @@ For a Git checkout, scripts/upgrade_libraw.py downloads the same official archiv
 into vendor/libraw-0.22.2 and records the URL, hash and DLL symbol verification in
 validation/libraw-upgrade.json. LibRaw source was not modified; only its wheel DLL filename.
 
+The macOS arm64/x86_64 builds compile the unmodified LibRaw 0.22.2 source and
+rawpy 0.27.1 binding natively. Their matching tarballs are included under
+third-party-source/. Platform-specific wheel and native-library notices are
+collected under licenses/macos-runtime/ in the Mac packages, with a separate
+inventory. Intel cryptography may be compiled against Homebrew OpenSSL 3;
+its OpenSSL notices are retained with those native-library notices.
+
 libvips retains LGPL-2.1-or-later; pyvips/pyvips-binary and bundled libraries retain their
 upstream notices. NumPy, SciPy, OpenCV, Pillow, imagecodecs, Colour Science, msgpack,
 platformdirs and other dependencies retain their own licenses.
